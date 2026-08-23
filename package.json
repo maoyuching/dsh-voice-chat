@@ -2,6 +2,10 @@
   "name": "dsh-voice-chat",
   "version": "0.1.0",
   "description": "豆包式语音对话客户端插件：聊天框麦克风按钮（按住说话）→ 语音转文字发送 → 回复自动朗读。",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_GITHUB_USERNAME/dsh-voice-chat.git"
+  },
   "type": "module",
   "main": "lib/index.js",
   "exports": {
