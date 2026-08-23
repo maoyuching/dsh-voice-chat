@@ -59,8 +59,11 @@
 ## 四、安装
 
 ```bash
-# 在插件源码目录下（或指定绝对路径）
-dsh plugin --profile web add D:\Code\project1employee\dsh-voice-chat
+# 方式一（推荐，已发布到 npm）：
+dsh plugin --profile web add dsh-voice-chat
+
+# 方式二（本地开发，指定源码路径）：
+dsh plugin --profile web add D:\Code\dsh-voice-chat
 
 # 重启 dsh web 使插件生效
 # （停止当前 dsh web 进程，再重新运行 dsh web）

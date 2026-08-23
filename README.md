@@ -1,6 +1,6 @@
 # dsh-voice-chat
 
-豆包式语音对话插件（DeepSeek Harness Web GUI）：点一下 🎤 说话，AI 回复自动用语音"汇报"给你。
+豆包式语音对话插件（[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web GUI）：点一下 🎤 说话，AI 回复自动用语音"汇报"给你。
 
 > 📖 完整使用手册见 [MANUAL.md](MANUAL.md)（安装/操作/配置/FAQ/原理）。
 
@@ -17,9 +17,16 @@
 ## 安装
 
 ```bash
-dsh plugin --profile web add <本插件绝对路径>
-# 然后重启 dsh web
+# 方式一（推荐，已发布到 npm）：
+dsh plugin --profile web add dsh-voice-chat
+
+# 方式二（本地开发）：
+dsh plugin --profile web add D:/Code/dsh-voice-chat
+
+# 装完重启 dsh web
 ```
+
+> 注：插件自带内联 edge-tts 客户端（微软 Edge 免费朗读服务，无需任何语音 API key）；仅语音转文字（ASR）需要密钥。
 
 ## 配置（改配置文件即可）
 
@@ -34,7 +41,7 @@ dsh plugin --profile web add <本插件绝对路径>
     asrBaseUrl: https://api.siliconflow.cn/v1
     asrModel: FunAudioLLM/SenseVoiceSmall
     llmModel: deepseek-v4-flash     # 转述模型（最低优先级 fallback）：默认跟当前对话/主界面选中的 LLM 走；连 agentDefaultModel 都没有时才用这里
-    voice: zh-CN-XiaoxiaoNeural     # 朗读音色（edge-tts 音色 id，见 voice_list）
+    voice: zh-CN-XiaoxiaoNeural     # 朗读音色（edge-tts 音色 id，也可在设置面板选）
     rate: '+10%'                    # 语速（'+15%' 更快，'+0%' 原速）
     silenceMs: 2500                 # 静音多少毫秒后自动结束录音
     shortTextChars: 50              # 短于此字数的回复直接原样读、不转述
@@ -52,5 +59,6 @@ dsh plugin --profile web add <本插件绝对路径>
 - `package.json` — `dsh.bundle.patch` 让 `dsh plugin add` 自动注册为 profile 层；`dsh.client` + `exports["./client"]` 让 Web 端加载浏览器 bundle；
 - `cordis.patch.yml` — 插入 `dsh-voice-chat` 行 + 配置示例；
 - `lib/index.js` — 宿主半身：`/stt`（ASR）、`/tts`（edge-tts）、`/speak`（转述+合成）、`/config`、`GET|POST /settings`（设置面板存取）等路由；
+- `lib/edge-tts.js` — 内联的 edge-tts 协议客户端（微软 Edge 免费朗读服务），唯一运行时依赖 `ws`；
 - `lib/client.js` — 浏览器半身：麦克风/静音按钮、静音检测、单信道播报、快捷键、提示音；并向 DSH 设置弹窗注入「voice chat」类目表单；
 - `settings.local.json` — 设置弹窗保存的覆盖配置（运行时生成，不进 git）。
