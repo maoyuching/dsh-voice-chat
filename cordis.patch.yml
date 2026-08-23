@@ -1,0 +1,25 @@
+# dsh-voice-chat 组合包补丁：把语音对话插件行插入 profile。
+# 宿主半身加载 dsh-voice-chat 包；浏览器半身由 dsh.client + exports["./client"] 自动发现。
+#
+# ⚙️ 配置方法：在【你自己的 profile 配置文件】里按 id 覆盖本行 config，例如
+#   编辑 ~/.dsh/profiles/web/cordis.patch.yml，追加：
+#
+#   - id: dsh-voice-chat
+#     name: 'dsh-voice-chat'
+#     config:
+#       asrEngine: siliconflow          # siliconflow | groq | custom（语音转文字）
+#       asrApiKey: sk-xxxx              # ASR 密钥（也可用环境变量 DSH_VOICE_ASR_KEY）
+#       asrBaseUrl: https://api.siliconflow.cn/v1
+#       asrModel: FunAudioLLM/SenseVoiceSmall
+#       llmModel: deepseek-v4-flash     # 回复转述模型（复用 harness 自带的 LLM，无需密钥；可选 deepseek-v4-pro）
+#       voice: zh-CN-XiaoxiaoNeural     # 朗读音色（edge-tts 音色 id）
+#       rate: '+10%'                    # 语速（'+15%' 更快，'+0%' 原速）
+#       silenceMs: 2500                 # 静音多少毫秒后自动结束录音
+#       shortTextChars: 50              # 短于此字数的回复直接原样读、不转述
+#       rewrite: true                   # 是否用 LLM 把回复转述后再朗读
+#
+# 不改配置时全部使用默认值（如上注释所示）。
+- insert:
+    - id: dsh-voice-chat
+      name: 'dsh-voice-chat'
+      config: {}
