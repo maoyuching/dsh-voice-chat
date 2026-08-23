@@ -8,48 +8,11 @@ importers:
 
   .:
     dependencies:
-      dsh-voice:
-        specifier: ^0.1.0
-        version: 0.1.0
+      ws:
+        specifier: ^8.21.3
+        version: 8.21.3
 
 packages:
-
-  agent-base@9.0.0:
-    resolution: {integrity: sha512-TQf59BsZnytt8GdJKLPfUZ54g/iaUL2OWDSFCCvMOhsHduDQxO8xC4PNeyIkVcA5KwL2phPSv0douC0fgWzmnA==}
-    engines: {node: '>= 20'}
-
-  debug@4.4.3:
-    resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
-    engines: {node: '>=6.0'}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-
-  dsh-voice@0.1.0:
-    resolution: {integrity: sha512-xHrKxqQmiq9sgldWjSvLtyzq4yq1rmNQSBpJZmTxN9obo9+H6/xabAX7GSeDRW6MQcsMdL+ecn652nY1uLUstw==}
-    engines: {node: '>=22'}
-
-  https-proxy-agent@9.1.0:
-    resolution: {integrity: sha512-ag87y7cJJ9/3+GxFr8Oy4O5faDsGRGnBGsJj/YjOSsSx/5eadKLYTMPlzuR6obgoCDDm0abAAZitXXQkMOPSpA==}
-    engines: {node: '>= 20'}
-
-  ms@2.1.3:
-    resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
-
-  proxy-agent-negotiate@1.1.0:
-    resolution: {integrity: sha512-N8IBcM3UgCVzz2L2Lqv8DVntDnnC8/hiV4nEDUPkqq72TPUgYWjQc+bdZlBPZK9LzPAvOY//gAt0S0DApoOXWQ==}
-    engines: {node: '>= 20'}
-    peerDependencies:
-      kerberos: ^2.0.0
-    peerDependenciesMeta:
-      kerberos:
-        optional: true
-
-  undici@8.10.0:
-    resolution: {integrity: sha512-HvltHd7avK13QIw/oLe4qoOLyoVSoafqJ2jYOrtMRBkbYT31eiBQ8O0ehRKZiEZCMEyLFQNIADpgCWC5fALvYQ==}
-    engines: {node: '>=22.19.0'}
 
   ws@8.21.3:
     resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
@@ -64,37 +27,5 @@ packages:
         optional: true
 
 snapshots:
-
-  agent-base@9.0.0: {}
-
-  debug@4.4.3:
-    dependencies:
-      ms: 2.1.3
-
-  dsh-voice@0.1.0:
-    dependencies:
-      https-proxy-agent: 9.1.0
-      undici: 8.10.0
-      ws: 8.21.3
-    transitivePeerDependencies:
-      - bufferutil
-      - kerberos
-      - supports-color
-      - utf-8-validate
-
-  https-proxy-agent@9.1.0:
-    dependencies:
-      agent-base: 9.0.0
-      debug: 4.4.3
-      proxy-agent-negotiate: 1.1.0
-    transitivePeerDependencies:
-      - kerberos
-      - supports-color
-
-  ms@2.1.3: {}
-
-  proxy-agent-negotiate@1.1.0: {}
-
-  undici@8.10.0: {}
 
   ws@8.21.3: {}
