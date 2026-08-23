@@ -16,6 +16,13 @@
 - **设置入口**：设置项收进 **DSH 自带设置弹窗**（左下角齿轮 → 左侧「voice chat」类目）：ASR 接口（Base URL / 模型 / API Key）、**识别后是否自动发送**、**长回复转述朗读开关**（默认关）、**静音自动结束时长**、**朗读音色（Edge TTS）**；保存在插件目录 `settings.local.json`（已 gitignore），保存即生效无需重启；
 - **快捷键**：`Alt+S` 切换麦克风（备用 `Ctrl+M` / `Ctrl+Shift+M`）。
 
+## 环境要求
+
+- **DeepSeek Harness（dsh）**：已安装并运行 Web GUI（`dsh web`）；
+- **Node.js ≥ 22**（宿主与浏览器端均需要；edge-tts 客户端基于 `ws`，无需额外运行时）；
+- **浏览器**：Chrome / Edge（录音需要 `MediaRecorder` 支持）；
+- **ASR 密钥**：语音转文字需要（推荐 SiliconFlow，支持 OpenAI 兼容接口）。
+
 ## 安装
 
 ```bash

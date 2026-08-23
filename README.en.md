@@ -16,6 +16,13 @@ A Doubao-style voice chat plugin for the [DeepSeek Harness](https://github.com/d
 - **Settings UI**: all settings live inside **DSH's built-in settings dialog** (gear icon bottom-left → "voice chat" section on the left): ASR endpoint (Base URL / model / API key), **auto-send after transcription**, **condensed reading toggle** (off by default), **silence auto-stop duration**, **Edge TTS voice**; saved to `settings.local.json` in the plugin dir (gitignored), applied immediately — no restart needed;
 - **Hotkeys**: `Alt+S` toggles the mic (alternates `Ctrl+M` / `Ctrl+Shift+M`).
 
+## Requirements
+
+- **DeepSeek Harness (dsh)**: installed and running the Web GUI (`dsh web`);
+- **Node.js ≥ 22** (host and browser half; the edge-tts client runs on `ws`, no extra runtime needed);
+- **Browser**: Chrome / Edge (recording needs `MediaRecorder` support);
+- **ASR key**: required for speech-to-text (SiliconFlow recommended; OpenAI-compatible endpoints work).
+
 ## Install
 
 ```bash
