@@ -1,5 +1,7 @@
 # dsh-voice-chat
 
+<p align="center"><a href="README.md">中文</a> | <b>English</b></p>
+
 A Doubao-style voice chat plugin for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web GUI: click 🎤 and talk — the AI's reply is read back to you aloud.
 
 > 📖 Full user manual: [MANUAL.md](MANUAL.md) (install / usage / configuration / FAQ / internals).

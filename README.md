@@ -1,5 +1,7 @@
 # dsh-voice-chat
 
+<p align="center"><b>中文</b> | <a href="README.en.md">English</a></p>
+
 豆包式语音对话插件（[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web GUI）：点一下 🎤 说话，AI 回复自动用语音"汇报"给你。
 
 > 📖 完整使用手册见 [MANUAL.md](MANUAL.md)（安装/操作/配置/FAQ/原理）。
