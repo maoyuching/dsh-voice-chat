@@ -40,5 +40,18 @@
   "dependencies": {
     "ws": "^8.21.3"
   },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "voice",
+    "tts",
+    "stt",
+    "edge-tts",
+    "voice-chat"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "license": "MIT"
 }
