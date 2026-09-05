@@ -15,7 +15,7 @@ A Doubao-style voice chat plugin for the [DeepSeek Harness](https://github.com/d
 - **No duplicate playback**: which replies were already spoken is remembered per session, so re-entering a session does not replay them;
 - **Mute toggle** 🔊: while playing (button highlighted), click to **mute immediately** — stops the current audio and clears the whole queue; click again to resume auto-readout;
 - **Settings UI**: all settings live inside **DSH's built-in settings dialog** (gear icon bottom-left → "voice chat" section on the left): 🎤 **Voice Recognition Settings** (ASR endpoint, auto-send, silence duration), 🔊 **Readout Settings** (TTS engine choice, condensed reading toggle, voice, custom TTS API config); saved to `settings.local.json` in the plugin dir (gitignored), applied immediately — no restart needed;
-- **Hotkeys**: `Alt+S` toggles the mic (alternates `Ctrl+M` / `Ctrl+Shift+M`).
+- **Hotkeys**: `Ctrl+Shift+Space` toggles the mic (alternates `Ctrl+M` / `Ctrl+Shift+M`).
 
 ## Requirements
 

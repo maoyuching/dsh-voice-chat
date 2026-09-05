@@ -42,7 +42,7 @@
 | 🔇 静音开关 | 正在播报时点击**立即停止**；静音后不再自动朗读 |
 | ⏪ 单信道播报 | 新回复抢占旧播报；快捷键/录音可打断，同一时刻只有一种声音 |
 | 🔁 防重播 | 按会话记住已播报的回复，**重新进入会话不会重复朗读** |
-| ⌨️ 快捷键 | `Alt+S` 切换麦克风（备用 `Ctrl+M` / `Ctrl+Shift+M`），打字时也能用 |
+| ⌨️ 快捷键 | `Ctrl+Shift+Space` 切换麦克风（备用 `Ctrl+M` / `Ctrl+Shift+M`），打字时也能用 |
 | ⚙️ 全配置化 | TTS 引擎/音色/语速/静音时长/转述开关等全部可改配置文件，无需改代码 |
 | 🔋 灵活密钥 | 转述复用 harness 自带的 LLM，TTS 支持免费 Edge 或自定义密钥 |
 
@@ -84,7 +84,7 @@ dsh plugin --profile web add D:\Code\dsh-voice-chat
 4. 说完停顿约 2.5 秒 → 听到"咚" → 语音自动转文字并发送；
 5. AI 回复到达后，**自动语音播报**（简短汇报版）。
 
-> 💡 想更快？直接用快捷键 **Alt+S**（左手拇指+无名指）代替点按钮。
+> 💡 想更快？直接用快捷键 **Ctrl+Shift+Space** 代替点按钮。
 
 ---
 
@@ -101,17 +101,17 @@ dsh plugin --profile web add D:\Code\dsh-voice-chat
 ### 6.2 语音交互流程
 
 ```
-点 🎤/按 Alt+S → 叮 → [聆听中…] → 说话 → 停顿 2.5s（设置→voice chat 可改）
+点 🎤/按 Ctrl+Shift+Space → 叮 → [聆听中…] → 说话 → 停顿 2.5s（设置→voice chat 可改）
 → 咚 → 转写中… → 文字填入输入框并自动发送（设置→voice chat 可改为只填不发送）
 → AI 回复 → 语音播报（设置里开启"转述朗读"时：先 LLM 精简 ≤150字、助手口吻 再播，默认关）
-→ 中途可点 🔊 停止 / 按 Alt+S 打断并重新说话
+→ 中途可点 🔊 停止 / 按 Ctrl+Shift+Space 打断并重新说话
 ```
 
 ### 6.3 快捷键
 
 | 快捷键 | 作用 |
 |---|---|
-| `Alt+S` | 切换麦克风（主，键位紧邻、单手好按） |
+| `Ctrl+Shift+Space` | 切换麦克风（主） |
 | `Ctrl+M` / `Ctrl+Shift+M` | 切换麦克风（备用） |
 
 ### 6.4 状态提示
@@ -176,11 +176,11 @@ dsh plugin --profile web add D:\Code\dsh-voice-chat
 ```
 浏览器半身（lib/client.js）              宿主半身（lib/index.js）
 ┌──────────────────────────┐    ┌─────────────────────────────────────┐
-│ 🎤 按钮 / Alt+S 快捷键     │    │ POST /dsh-voice-chat/stt  语音→文字    │
-│ MediaRecorder 录音        │───▶│  （硅基流动 ASR）                     │
+│ 🎤 按钮 / Ctrl+Shift+Space    │    │ POST /dsh-voice-chat/stt  语音→文字    │
+│ MediaRecorder 录音        │───▶│  （siliconflow / groq / mimo ASR）    │
 │ 静音检测（AnalyserNode）   │    │ POST /dsh-voice-chat/speak 文字→语音    │
 │ 单信道播报（代次机制）      │◀───│  ① LLM 转述（跟当前对话实际模型）    │
-│ sessionStorage 防重播      │    │  ② edge-tts 合成 MP3                 │
+│ sessionStorage 防重播      │    │  ② edge-tts / MiMo TTS 合成音频       │
 │ 🔊 静音 / 🔔 提示音        │    │ GET  /dsh-voice-chat/config 暴露配置   │
 └──────────────────────────┘    └─────────────────────────────────────┘
 ```
