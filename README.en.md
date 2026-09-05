@@ -9,11 +9,12 @@ A Doubao-style voice chat plugin for the [DeepSeek Harness](https://github.com/d
 ## Features
 
 - **Voice input**: click 🎤 to start listening (ding) → speak → auto-stops after 2.5s of silence (dong) → transcribed and sent;
-- **Voice output**: AI replies are synthesized with edge-tts and read aloud at +10% speed; a **condensed reading** option (off by default) can rewrite longer replies into a short spoken summary in the assistant's own voice (≤ original length, no tangents, no code/tables) before speaking — **the rewrite follows the LLM actually selected in the current conversation** (no hardcoded default, so it never fails on a disabled default model or wrong key);
+- **Voice output**: AI replies are synthesized with TTS and read aloud at +10% speed; a **condensed reading** option (off by default) can rewrite longer replies into a short spoken summary in the assistant's own voice (≤ original length, no tangents, no code/tables) before speaking — **the rewrite follows the LLM actually selected in the current conversation** (no hardcoded default, so it never fails on a disabled default model or wrong key);
+- **TTS engine choice**: supports **Microsoft Edge TTS** (free, recommended) and **custom TTS** (OpenAI-compatible API, e.g., OpenAI/DeepSeek), switchable in settings;
 - **Single-channel playback**: a new reply preempts the previous one; interrupt anytime via hotkey or button — only one voice at a time;
 - **No duplicate playback**: which replies were already spoken is remembered per session, so re-entering a session does not replay them;
 - **Mute toggle** 🔊: while playing (button highlighted), click to **mute immediately** — stops the current audio and clears the whole queue; click again to resume auto-readout;
-- **Settings UI**: all settings live inside **DSH's built-in settings dialog** (gear icon bottom-left → "voice chat" section on the left): ASR endpoint (Base URL / model / API key), **auto-send after transcription**, **condensed reading toggle** (off by default), **silence auto-stop duration**, **Edge TTS voice**; saved to `settings.local.json` in the plugin dir (gitignored), applied immediately — no restart needed;
+- **Settings UI**: all settings live inside **DSH's built-in settings dialog** (gear icon bottom-left → "voice chat" section on the left): 🎤 **Voice Recognition Settings** (ASR endpoint, auto-send, silence duration), 🔊 **Readout Settings** (TTS engine choice, condensed reading toggle, voice, custom TTS API config); saved to `settings.local.json` in the plugin dir (gitignored), applied immediately — no restart needed;
 - **Hotkeys**: `Alt+S` toggles the mic (alternates `Ctrl+M` / `Ctrl+Shift+M`).
 
 ## Requirements
@@ -45,23 +46,42 @@ Override `config` by id in the profile's `~/.dsh/profiles/web/cordis.patch.yml` 
 - id: dsh-voice-chat
   name: 'dsh-voice-chat'
   config:
-    asrEngine: siliconflow          # siliconflow | groq | custom (speech-to-text)
+    # Voice Recognition Settings
+    asrEngine: siliconflow          # siliconflow | groq | mimo | custom (speech-to-text)
     asrApiKey: sk-xxxx              # ASR key (or env var DSH_VOICE_ASR_KEY)
-    asrBaseUrl: https://api.siliconflow.cn/v1
-    asrModel: FunAudioLLM/SenseVoiceSmall
+    asrBaseUrl: https://api.siliconflow.cn/v1   # for mimo use full endpoint https://api.xiaomimimo.com/v1/chat/completions
+    asrModel: FunAudioLLM/SenseVoiceSmall       # for mimo use mimo-v2.5-asr
     llmModel: deepseek-v4-flash     # rewrite model (lowest-priority fallback): by default follows the LLM selected in the current conversation / main UI; only used when even agentDefaultModel is missing
-    voice: zh-CN-XiaoxiaoNeural     # edge-tts voice id (also selectable in the settings panel)
-    rate: '+10%'                    # speaking rate ('+15%' faster, '+0%' normal)
     silenceMs: 2500                 # ms of silence before recording auto-stops
-    shortTextChars: 50              # replies shorter than this are read verbatim, never rewritten
+    # Readout Settings
     rewrite: true                   # rewrite long replies with LLM before reading (default off; toggle in settings)
+    ttsEngine: edge                 # TTS engine: edge (Microsoft Edge TTS, free) | mimo (Xiaomi MiMo TTS) | custom (OpenAI-compatible API)
+    voice: zh-CN-XiaoxiaoNeural     # edge-tts voice id (also selectable in the settings panel)
+    ttsBaseUrl: https://api.openai.com/v1  # custom TTS API endpoint (required when ttsEngine=custom)
+    ttsModel: tts-1                 # custom TTS model name (leave empty for built-in default)
+    ttsApiKey: sk-xxxx              # custom TTS API key (leave empty to use ASR key)
+    rate: '+10%'                    # speaking rate ('+15%' faster, '+0%' normal)
+    shortTextChars: 50              # replies shorter than this are read verbatim, never rewritten
 ```
 
 Restart `dsh web` after editing.
 
 ### ⚙️ Settings UI (inside DSH's built-in settings dialog — highest priority)
 
-No config file needed: open DSH's settings dialog (gear icon, bottom-left) → "**voice chat**" on the left → edit ASR Base URL / model name / API key, auto-send toggle, condensed-reading toggle, silence auto-stop duration (seconds), and the Edge TTS voice. Saving writes to `settings.local.json` in the plugin root and takes effect immediately. Priority: **settings dialog > per-line config in cordis.patch.yml > env vars > defaults**; leaving a field empty falls back to the next layer.
+No config file needed: open DSH's settings dialog (gear icon, bottom-left) → "**voice chat**" on the left → edit:
+
+**🎤 Voice Recognition Settings**
+- ASR Base URL / model name / API key
+- Auto-send after transcription toggle
+- Silence auto-stop duration (seconds)
+
+**🔊 Readout Settings**
+- Condensed reading toggle (off by default)
+- TTS engine choice (Microsoft Edge TTS free / custom TTS OpenAI-compatible API)
+- Edge TTS voice
+- Custom TTS Base URL / model name / API key
+
+Saving writes to `settings.local.json` in the plugin root and takes effect immediately. Priority: **settings dialog > per-line config in cordis.patch.yml > env vars > defaults**; leaving a field empty falls back to the next layer.
 
 ## Structure
 

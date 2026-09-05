@@ -9,11 +9,12 @@
 ## 功能
 
 - **语音输入**：点 🎤 开始聆听（"叮"提示音）→ 说话 → 停顿 2.5s 自动结束（"咚"）→ 转写并发送；
-- **语音输出**：AI 回复经 edge-tts 合成朗读，语速 +10%；设置里可开「**转述朗读**」（默认关闭）——开启后较长回复会先由 LLM 以"助手本人"口吻**收敛转述**（≤原文长度、不发散、去代码表格）再播报，**转述用模型自动跟随当前对话在用的 LLM**（不再硬编码默认，避免默认模型被关/密钥错时转述失败）；
+- **语音输出**：AI 回复经 TTS 合成朗读，语速 +10%；设置里可开「**转述朗读**」（默认关闭）——开启后较长回复会先由 LLM 以"助手本人"口吻**收敛转述**（≤原文长度、不发散、去代码表格）再播报，**转述用模型自动跟随当前对话在用的 LLM**（不再硬编码默认，避免默认模型被关/密钥错时转述失败）；
+- **TTS 引擎选择**：支持**微软 Edge TTS**（免费，推荐）和**自定义 TTS**（OpenAI 兼容接口，如 OpenAI/DeepSeek 等），在设置页面可切换；
 - **单信道播报**：新回复抢占旧播报、按快捷键/点按钮立即打断，同一时刻只有一种声音；
 - **防重播**：按会话记住已播报的回复，重进会话不重复朗读；
 - **静音开关** 🔊：正在播报（按钮高亮）时点它**立刻静音**——马上停掉当前声音、清空全部待播队列；静音状态下再点一下恢复自动朗读；
-- **设置入口**：设置项收进 **DSH 自带设置弹窗**（左下角齿轮 → 左侧「voice chat」类目）：ASR 接口（Base URL / 模型 / API Key）、**识别后是否自动发送**、**长回复转述朗读开关**（默认关）、**静音自动结束时长**、**朗读音色（Edge TTS）**；保存在插件目录 `settings.local.json`（已 gitignore），保存即生效无需重启；
+- **设置入口**：设置项收进 **DSH 自带设置弹窗**（左下角齿轮 → 左侧「voice chat」类目）：🎤 **语音识别设置**（ASR 接口、自动发送、静音时长）、🔊 **朗读设置**（TTS 引擎选择、转述朗读开关、朗读音色、自定义 TTS API 配置）；保存在插件目录 `settings.local.json`（已 gitignore），保存即生效无需重启；
 - **快捷键**：`Alt+S` 切换麦克风（备用 `Ctrl+M` / `Ctrl+Shift+M`）。
 
 ## 环境要求
@@ -45,23 +46,42 @@ dsh plugin --profile web add D:/Code/dsh-voice-chat
 - id: dsh-voice-chat
   name: 'dsh-voice-chat'
   config:
-    asrEngine: siliconflow          # siliconflow | groq | custom（语音转文字）
+    # 语音识别设置
+    asrEngine: siliconflow          # siliconflow | groq | mimo | custom（语音转文字）
     asrApiKey: sk-xxxx              # ASR 密钥（或环境变量 DSH_VOICE_ASR_KEY）
-    asrBaseUrl: https://api.siliconflow.cn/v1
-    asrModel: FunAudioLLM/SenseVoiceSmall
+    asrBaseUrl: https://api.siliconflow.cn/v1   # mimo 请填完整端点 https://api.xiaomimimo.com/v1/chat/completions
+    asrModel: FunAudioLLM/SenseVoiceSmall       # mimo 用 mimo-v2.5-asr
     llmModel: deepseek-v4-flash     # 转述模型（最低优先级 fallback）：默认跟当前对话/主界面选中的 LLM 走；连 agentDefaultModel 都没有时才用这里
-    voice: zh-CN-XiaoxiaoNeural     # 朗读音色（edge-tts 音色 id，也可在设置面板选）
-    rate: '+10%'                    # 语速（'+15%' 更快，'+0%' 原速）
     silenceMs: 2500                 # 静音多少毫秒后自动结束录音
-    shortTextChars: 50              # 短于此字数的回复直接原样读、不转述
+    # 朗读设置
     rewrite: true                   # 是否用 LLM 把长回复转述后再朗读（默认关闭，设置页可切换）
+    ttsEngine: edge                 # edge（微软 Edge TTS，免费）| mimo（小米 MiMo TTS）| custom（自定义 OpenAI 兼容接口）
+    voice: zh-CN-XiaoxiaoNeural     # 朗读音色（edge-tts 音色 id，也可在设置面板选）
+    ttsBaseUrl: https://api.openai.com/v1  # 自定义 TTS 的 API 地址（ttsEngine=custom 时必填）
+    ttsModel: tts-1                 # 自定义 TTS 的模型名称（留空用内置默认）
+    ttsApiKey: sk-xxxx              # 自定义 TTS 的 API Key（留空则沿用 ASR 密钥）
+    rate: '+10%'                    # 语速（'+15%' 更快，'+0%' 原速）
+    shortTextChars: 50              # 短于此字数的回复直接原样读、不转述
 ```
 
 改完重启 `dsh web` 生效。
 
 ### ⚙️ 设置入口（DSH 自带设置弹窗里，优先级最高）
 
-不用动配置文件：打开 DSH 的设置弹窗（左下角齿轮），左侧点「**voice chat**」，右侧即可改 ASR 的 Base URL / 模型名 / API Key、识别后是否自动发送、长回复转述朗读开关、静音自动结束时长（秒）、Edge TTS 朗读音色。保存后写入插件根目录的 `settings.local.json` 并立即生效。优先级：**设置弹窗 > cordis.patch.yml 行 config > 环境变量 > 默认值**；某项留空即回落到下一层。
+不用动配置文件：打开 DSH 的设置弹窗（左下角齿轮），左侧点「**voice chat**」，右侧即可改：
+
+**🎤 语音识别设置**
+- ASR 的 Base URL / 模型名 / API Key
+- 识别后是否自动发送
+- 静音自动结束时长（秒）
+
+**🔊 朗读设置**
+- 长回复转述朗读开关（默认关闭）
+- TTS 引擎选择（微软 Edge TTS 免费 / 自定义 TTS OpenAI 兼容接口）
+- 朗读音色（Edge TTS）
+- 自定义 TTS 的 Base URL / 模型名 / API Key
+
+保存后写入插件根目录的 `settings.local.json` 并立即生效。优先级：**设置弹窗 > cordis.patch.yml 行 config > 环境变量 > 默认值**；某项留空即回落到下一层。
 
 ## 结构
 

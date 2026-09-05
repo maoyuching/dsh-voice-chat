@@ -7,16 +7,22 @@
 #   - id: dsh-voice-chat
 #     name: 'dsh-voice-chat'
 #     config:
+#       # 语音识别设置
 #       asrEngine: siliconflow          # siliconflow | groq | custom（语音转文字）
 #       asrApiKey: sk-xxxx              # ASR 密钥（也可用环境变量 DSH_VOICE_ASR_KEY）
 #       asrBaseUrl: https://api.siliconflow.cn/v1
 #       asrModel: FunAudioLLM/SenseVoiceSmall
 #       llmModel: deepseek-v4-flash     # 回复转述模型（复用 harness 自带的 LLM，无需密钥；可选 deepseek-v4-pro）
-#       voice: zh-CN-XiaoxiaoNeural     # 朗读音色（edge-tts 音色 id）
-#       rate: '+10%'                    # 语速（'+15%' 更快，'+0%' 原速）
 #       silenceMs: 2500                 # 静音多少毫秒后自动结束录音
-#       shortTextChars: 50              # 短于此字数的回复直接原样读、不转述
+#       # 朗读设置
 #       rewrite: true                   # 是否用 LLM 把回复转述后再朗读
+#       ttsEngine: edge                 # TTS 引擎：edge（微软 Edge TTS，免费）| custom（自定义 TTS，OpenAI 兼容接口）
+#       voice: zh-CN-XiaoxiaoNeural     # 朗读音色（edge-tts 音色 id）
+#       ttsBaseUrl: https://api.openai.com/v1  # 自定义 TTS 的 API 地址（ttsEngine=custom 时必填）
+#       ttsModel: tts-1                 # 自定义 TTS 的模型名称（留空用内置默认）
+#       ttsApiKey: sk-xxxx              # 自定义 TTS 的 API Key（留空则沿用 ASR 密钥）
+#       rate: '+10%'                    # 语速（'+15%' 更快，'+0%' 原速）
+#       shortTextChars: 50              # 短于此字数的回复直接原样读、不转述
 #
 # 不改配置时全部使用默认值（如上注释所示）。
 - insert:
