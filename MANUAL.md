@@ -1,7 +1,7 @@
 # dsh-voice-chat 使用手册
 
 > DeepSeek Harness 语音对话插件 —— 点一下 🎤 说话，AI 回复用语音"汇报"给你。
-> 版本 0.1.0 · 更新于 2026-08-15
+> 版本 0.3.1 · 更新于 2026-09-05
 
 ---
 
@@ -26,9 +26,8 @@
 `dsh-voice-chat` 是一个运行在 DeepSeek Harness（DSH）Web GUI 上的**豆包式语音对话插件**。它给聊天输入框旁边加了一个麦克风按钮：
 
 - **说**：点一下 🎤 开始聆听，说完停顿片刻自动结束，语音转成文字发给 AI；
-- **听**：AI 的回复不会逐字朗读，而是先由 LLM 以"助手本人"的口吻**简短转述**（挑重点、不发散、不超过原文长度），再用语音播报出来。
-
-整条链路（录音 → 转文字 → AI 回复 → 转述 → 朗读）全部打通，**TTS 免费、无限制**。
+- **听**：AI 的回复用 TTS 合成语音播报出来（支持 Edge TTS 免费朗读 / MiMo TTS 中文音色 / 自定义 TTS）；
+- **可选转述**：开启「转述朗读」后，较长回复会先由 LLM 以"助手本人"的口吻简短转述，再播报。
 
 ---
 
@@ -37,37 +36,35 @@
 | 功能 | 说明 |
 |---|---|
 | 🎤 语音输入 | 点按开始聆听（"叮"提示音）→ 说话 → 静音 2.5s 自动结束（"咚"）→ 转写发送 |
-| 🗣️ 转述朗读 | （默认关闭）开启后：较长回复先经 LLM 收敛转述（≤原文、去代码表格、像真人汇报），再 TTS 朗读；**转述模型自动跟随当前对话实际在用的 LLM**（默认模型被关/密钥错时也不会失败） |
-| 🔊 TTS 引擎选择 | 支持**微软 Edge TTS**（免费，推荐）和**自定义 TTS**（OpenAI 兼容接口，如 OpenAI/DeepSeek 等） |
+| 🗣️ 转述朗读 | （默认关闭）开启后：较长回复先经 LLM 收敛转述（≤原文、去代码表格），再 TTS 朗读；转述模型自动跟随当前对话 LLM |
+| 🔊 TTS 引擎 | 支持 **Edge TTS**（微软免费）、**MiMo TTS**（小米，内置中文音色）、**自定义 TTS**（OpenAI 兼容） |
+| 🎤 ASR 引擎 | 支持 **SiliconFlow**（免费）、**Groq**（Whisper）、**MiMo**（小米，chat/completions 协议）、**自定义**（OpenAI 兼容） |
 | 🔇 静音开关 | 正在播报时点击**立即停止**；静音后不再自动朗读 |
 | ⏪ 单信道播报 | 新回复抢占旧播报；快捷键/录音可打断，同一时刻只有一种声音 |
-| 🔁 防重播 | 按会话记住已播报的回复，**重新进入会话不会重复朗读** |
+| 🔁 防重播 | 按会话记住已播报的回复，重新进入会话不会重复朗读 |
 | ⌨️ 快捷键 | `Ctrl+Shift+Space` 切换麦克风（备用 `Ctrl+M` / `Ctrl+Shift+M`），打字时也能用 |
-| ⚙️ 全配置化 | TTS 引擎/音色/语速/静音时长/转述开关等全部可改配置文件，无需改代码 |
-| 🔋 灵活密钥 | 转述复用 harness 自带的 LLM，TTS 支持免费 Edge 或自定义密钥 |
+| ⚙️ 设置面板 | DSH 自带设置弹窗里直接改，保存即生效，无需重启 |
+| 🔄 录音转码 | MiMo 等 chat 协议 ASR 只支持 wav/mp3，浏览器录音（webm）自动转 16kHz 单声道 WAV |
 
 ---
 
 ## 三、环境要求
 
 - **DeepSeek Harness**（dsh）已安装并运行 Web GUI（`dsh web`）；
-- **浏览器**：Chrome / Edge（Chromium 内核，需要 `MediaRecorder` 录音能力）；
-- **网络**：可访问硅基流动（ASR）与微软 Edge（TTS）服务；
-- **ASR 密钥**：一个硅基流动（SiliconFlow）API Key（免费注册，有免费模型额度）。
+- **Node.js ≥ 22**；
+- **浏览器**：Chrome / Edge（需要 `MediaRecorder` 录音能力）；
+- **ASR 密钥**：SiliconFlow 注册即有免费额度；MiMo 按用量计费（约 0.5 元/小时）；
+- **TTS**：Edge TTS 免费无需密钥；MiMo TTS / 自定义 TTS 需要对应密钥。
 
 ---
 
 ## 四、安装
 
 ```bash
-# 方式一（推荐，已发布到 npm）：
+# 推荐（已发布到 npm）：
 dsh plugin --profile web add dsh-voice-chat
 
-# 方式二（本地开发，指定源码路径）：
-dsh plugin --profile web add D:\Code\dsh-voice-chat
-
 # 重启 dsh web 使插件生效
-# （停止当前 dsh web 进程，再重新运行 dsh web）
 ```
 
 安装成功后：
@@ -79,10 +76,10 @@ dsh plugin --profile web add D:\Code\dsh-voice-chat
 ## 五、快速上手（5 分钟）
 
 1. **刷新页面**（Ctrl+Shift+R），确认输入框右侧出现 🎤 按钮；
-2. 配置 ASR 密钥（见[配置指南](#七配置指南)第 1 步）；
+2. 配置 ASR 密钥（见[配置指南](#七配置指南)）；
 3. **点一下 🎤** → 听到"叮" → 开始说话；
 4. 说完停顿约 2.5 秒 → 听到"咚" → 语音自动转文字并发送；
-5. AI 回复到达后，**自动语音播报**（简短汇报版）。
+5. AI 回复到达后，**自动语音播报**。
 
 > 💡 想更快？直接用快捷键 **Ctrl+Shift+Space** 代替点按钮。
 
@@ -95,15 +92,15 @@ dsh plugin --profile web add D:\Code\dsh-voice-chat
 | 按钮 | 空闲态 | 点击后 | 说明 |
 |---|---|---|---|
 | 🎤 麦克风 | 灰色 | 变红 ● 聆听中 | 再点一次=结束并发送 |
-| 🔊 朗读开关 | 灰色 | 播报中橙色高亮 / 静音红色 🔇 | 播报中点它=**立刻静音**（停声+清空队列）；再点一次=恢复自动朗读 |
-| ⚙️ 设置入口 | 左下角设置按钮 | 打开 DSH 设置弹窗 | 左侧「voice chat」类目：配置识别接口（Base URL/模型/API Key）、识别后是否自动发送、转述朗读开关、静音自动结束时长、朗读音色；保存即生效 |
+| 🔊 朗读开关 | 灰色 | 播报中橙色高亮 / 静音红色 🔇 | 播报中点它=立刻静音；再点一次=恢复自动朗读 |
+| ⚙️ 设置入口 | 左下角设置按钮 | 打开 DSH 设置弹窗 | 左侧「voice chat」类目：ASR/TTS 引擎选择、API 配置、音色等；保存即生效 |
 
 ### 6.2 语音交互流程
 
 ```
-点 🎤/按 Ctrl+Shift+Space → 叮 → [聆听中…] → 说话 → 停顿 2.5s（设置→voice chat 可改）
-→ 咚 → 转写中… → 文字填入输入框并自动发送（设置→voice chat 可改为只填不发送）
-→ AI 回复 → 语音播报（设置里开启"转述朗读"时：先 LLM 精简 ≤150字、助手口吻 再播，默认关）
+点 🎤/按 Ctrl+Shift+Space → 叮 → [聆听中…] → 说话 → 停顿 2.5s（设置可改）
+→ 咚 → 转写中… → 文字填入输入框并自动发送（可改为只填不发送）
+→ AI 回复 → 语音播报（开启"转述朗读"时：先 LLM 精简、助手口吻 再播，默认关）
 → 中途可点 🔊 停止 / 按 Ctrl+Shift+Space 打断并重新说话
 ```
 
@@ -124,13 +121,26 @@ dsh plugin --profile web add D:\Code\dsh-voice-chat
 
 ## 七、配置指南
 
-> 💡 **懒人方式**：不用改配置文件——打开 **DSH 设置弹窗**（左下角齿轮），左侧点「**voice chat**」，在右侧表单里设置：
-> - **🎤 语音识别设置**：ASR 接口（Base URL/模型/API Key）、是否自动发送、静音时长
-> - **🔊 朗读设置**：转述朗读开关、TTS 引擎选择（微软 Edge TTS 免费 / 自定义 TTS）、朗读音色、自定义 TTS 的 API 配置
-> 
-> 保存写入插件目录 `settings.local.json` 并立即生效。优先级：**设置弹窗 > 下面这份 cordis 配置 > 环境变量 > 默认值**。
+### ⚙️ 设置面板（推荐，优先级最高）
 
-所有配置写在 **profile 配置文件** `~/.dsh/profiles/web/cordis.patch.yml` 里（按 id 覆盖）：
+打开 DSH 设置弹窗（左下角齿轮），左侧点「**voice chat**」，右侧即可改：
+
+**🎤 语音识别设置**
+- ASR 引擎（SiliconFlow / Groq / MiMo / 自定义）
+- Base URL / 模型名 / API Key
+- 识别后是否自动发送
+- 静音自动结束时长（秒）
+
+**🔊 朗读设置**
+- TTS 引擎（Edge TTS / MiMo TTS / 自定义 TTS）
+- 各引擎对应的 Base URL / 模型名 / API Key / 音色
+- 长回复转述朗读开关（默认关闭）
+
+保存后立即生效，无需重启。
+
+### 📄 配置文件（低优先级）
+
+在 profile 的 `~/.dsh/profiles/web/cordis.patch.yml` 里按 id 覆盖 config：
 
 ```yaml
 - id: dsh-voice-chat
@@ -139,24 +149,24 @@ dsh plugin --profile web add D:\Code\dsh-voice-chat
     # 语音识别设置
     asrEngine: siliconflow            # ASR 引擎：siliconflow | groq | mimo | custom
     asrApiKey: sk-你的密钥             # ASR 密钥（或环境变量 DSH_VOICE_ASR_KEY）
-    asrBaseUrl: https://api.siliconflow.cn/v1   # mimo 请填完整端点 https://api.xiaomimimo.com/v1/chat/completions
-    asrModel: FunAudioLLM/SenseVoiceSmall       # mimo 用 mimo-v2.5-asr
-    llmModel: deepseek-v4-flash       # 转述模型（最低优先级 fallback）：默认跟当前对话/主界面选中的 LLM（agentDefaultModel）走；实在没有才用这里
+    asrBaseUrl: https://api.siliconflow.cn/v1
+    asrModel: FunAudioLLM/SenseVoiceSmall
+    llmModel: deepseek-v4-flash       # 转述模型（fallback，正常跟随当前对话）
     silenceMs: 2500                   # 静音多少毫秒后自动结束录音
     # 朗读设置
-    rewrite: true                     # 是否 LLM 转述后再朗读（默认关闭，设置页可切换）
-    ttsEngine: edge                   # TTS 引擎：edge（微软 Edge TTS，免费）| mimo（小米 MiMo TTS）| custom（自定义 OpenAI 兼容接口）
-    voice: zh-CN-XiaoxiaoNeural       # 朗读音色（edge-tts 音色，见下方列表）
-    ttsBaseUrl: https://api.openai.com/v1  # 自定义 TTS 的 API 地址（ttsEngine=custom 时必填）
-    ttsModel: tts-1                   # 自定义 TTS 的模型名称（留空用内置默认）
-    ttsApiKey: sk-你的密钥             # 自定义 TTS 的 API Key（留空则沿用 ASR 密钥）
-    rate: '+10%'                      # 语速（'+15%' 更快，'+0%' 原速）
-    shortTextChars: 50                # 短于此字数的回复直接原样读、不转述
+    rewrite: false                    # 转述朗读开关（默认关闭，设置页可切换）
+    ttsEngine: edge                   # TTS 引擎：edge | mimo | custom
+    voice: zh-CN-XiaoxiaoNeural       # 朗读音色
+    ttsBaseUrl: https://api.openai.com/v1
+    ttsModel: tts-1
+    ttsApiKey: sk-你的密钥
+    rate: '+10%'
+    shortTextChars: 50
 ```
 
-改完**重启 `dsh web`** 生效。
+改完**重启 `dsh web`** 生效。优先级：**设置面板 > cordis.patch.yml > 环境变量 > 默认值**。
 
-### 常用音色速查（edge-tts）
+### 常用音色速查（Edge TTS）
 
 | 音色 | 特点 |
 |---|---|
@@ -167,26 +177,44 @@ dsh plugin --profile web add D:\Code\dsh-voice-chat
 | `zh-HK-HiuMaanNeural` | 粤语 |
 | `en-US-AriaNeural` | 美式英语女声 |
 
+### MiMo TTS 预置音色
+
+| 音色 | 说明 |
+|---|---|
+| `mimo_default` | 默认音色（留空即用） |
+| `冰糖` | 中文女声 |
+| `茉莉` | 中文女声 |
+| `苏打` | 中文男声 |
+| `白桦` | 中文男声 |
+| `Mia` | 英文女声 |
+| `Chloe` | 英文女声 |
+| `Milo` | 英文男声 |
+| `Dean` | 英文男声 |
+
 ---
 
 ## 八、工作原理（面向程序员）
 
-插件分**宿主半身**（Node）与**浏览器半身**（React bundle），通过四条 HTTP 路由协作：
+插件分**宿主半身**（Node）与**浏览器半身**（React bundle），通过 HTTP 路由协作：
 
 ```
 浏览器半身（lib/client.js）              宿主半身（lib/index.js）
 ┌──────────────────────────┐    ┌─────────────────────────────────────┐
 │ 🎤 按钮 / Ctrl+Shift+Space    │    │ POST /dsh-voice-chat/stt  语音→文字    │
 │ MediaRecorder 录音        │───▶│  （siliconflow / groq / mimo ASR）    │
+│ blobToWav 自动转码        │    │ POST /dsh-voice-chat/tts   文字→语音    │
 │ 静音检测（AnalyserNode）   │    │ POST /dsh-voice-chat/speak 文字→语音    │
 │ 单信道播报（代次机制）      │◀───│  ① LLM 转述（跟当前对话实际模型）    │
 │ sessionStorage 防重播      │    │  ② edge-tts / MiMo TTS 合成音频       │
-│ 🔊 静音 / 🔔 提示音        │    │ GET  /dsh-voice-chat/config 暴露配置   │
+│ 🔊 静音 / 🔔 提示音        │    │ GET  /dsh-voice-chat/settings 暴露配置  │
 └──────────────────────────┘    └─────────────────────────────────────┘
 ```
 
-- **浏览器端**用 `window.__ModuleLoader__.load` 打包，通过 `dsh.client` + `exports["./client"]` 自动挂载；
-- **转述**用 harness 自带 LLM 服务（`ctx.llm.stream`）；客户端把当前对话实际在用的 provider+model 一起透传过来，所以**转述始终跟当前对话走同一个 LLM**；关闭了思考（`reasoningEffort: "off"`）保证输出稳定；
+**ASR 双协议**：URL 以 `/chat/completions` 结尾 → MiMo 式 chat 协议（音频 base64 data URL 在 messages.content.input_audio，仅支持 wav/mp3）；否则走 OpenAI 标准 `/audio/transcriptions` multipart 协议（webm 原样上传）。
+
+**浏览器端 WAV 转码**：MiMo 等 chat 协议 ASR 只接受 wav/mp3，但浏览器录音产出 webm/ogg/mp4。`blobToWav` 利用 Web Audio API（`decodeAudioData` → `OfflineAudioContext` 重采样 16kHz 单声道 → 手写 PCM16 WAV 头）完成转码，不依赖 ffmpeg。
+
+- **转述**用 harness 自带 LLM 服务（`ctx.llm.stream`）；客户端透传当前对话 provider+model，所以转述始终跟当前对话走同一个 LLM；
 - **单信道**用"播报代次"计数器，异步请求返回时代次不符即丢弃，杜绝声音重叠。
 
 ---
@@ -195,20 +223,20 @@ dsh plugin --profile web add D:\Code\dsh-voice-chat
 
 | 问题 | 原因 | 解决 |
 |---|---|---|
-| 播报听到的是**原文一字一句** | ① 回复 ≤50 字（设计如此）② 转述失败降级 | 长回复仍原文→看日志 `%TEMP%\dsh-web-restart*.log` 中 `rewrite` 字样 |
+| 播报听到的是**原文一字一句** | ① 回复 ≤50 字（设计如此）② 转述开关默认关闭 | 设置 → voice chat 勾选「长回复先转述」 |
 | 完全没声音 | ① 浏览器不支持/权限被拒 ② 静音 🔇 状态 | 检查按钮是否 🔇；F12 控制台看 `[dsh-voice-chat]` 报错 |
 | 按 🎤 没反应 | 麦克风权限未授权 | 地址栏左侧点"麦克风"允许访问 |
 | 重进会话又播报 | 跨浏览器/清了 sessionStorage | 正常：防重播按浏览器会话记忆 |
-| 识别不准/失败 | ASR 密钥错误或网络 | 检查 `asrApiKey`；硅基流动后台看额度 |
-| 想听精简转述版 | 默认原样朗读（转述开关默认关） | 设置 → voice chat 勾选「长回复先转述（精简）再播报」，或配置 `rewrite: true` |
+| ASR 识别失败（400/502） | ① 密钥错误 ② MiMo ASR URL 填错（需完整 chat/completions 端点）③ 音频格式不支持 | MiMo 用户确认 URL 以 `/chat/completions` 结尾；检查密钥 |
+| 识别失败"录音格式转换失败" | blobToWav 转码出错（极少见） | 刷新页面重试；检查 F12 控制台 |
 
-**排错口令**：一切问题先看两个地方——浏览器 F12 控制台（`[dsh-voice-chat]` 前缀）与宿主日志（`%TEMP%\dsh-web-restart*.log` 里的 `speak:`/`rewrite` 记录）。
+**排错口令**：一切问题先看两个地方——浏览器 F12 控制台（`[dsh-voice-chat]` 前缀）与宿主日志（`%TEMP%\dsh-web-restart*.log`）。
 
 ---
 
 ## 十、安全提示
 
-- **ASR 密钥**以明文存在 `cordis.patch.yml` 中，请勿将该文件推送到公共仓库；更稳妥的做法是改用环境变量 `DSH_VOICE_ASR_KEY`；
+- **ASR/TTS 密钥**存在 `settings.local.json`（设置面板保存）或 `cordis.patch.yml` 中，请勿将这些文件推送到公共仓库；更稳妥的做法是改用环境变量（`DSH_VOICE_ASR_KEY` 等）；
 - 转述复用 harness 自身 LLM，计费与 agent 对话同一账单（每次转述约几百 token）；
 - 插件拥有与 agent 相同的权限，安装前请确认来源可信。
 
@@ -217,8 +245,8 @@ dsh plugin --profile web add D:\Code\dsh-voice-chat
 ## 十一、更新与卸载
 
 ```bash
-# 更新（源码有改动时重新执行）
-dsh plugin --profile web add D:\Code\project1employee\dsh-voice-chat
+# 更新
+dsh plugin --profile web add dsh-voice-chat
 
 # 卸载
 dsh plugin --profile web remove dsh-voice-chat
