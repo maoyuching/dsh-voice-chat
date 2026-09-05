@@ -1,7 +1,7 @@
 {
   "name": "dsh-voice-chat",
-  "version": "0.3.0",
-  "description": "豆包式语音对话客户端插件：聊天框麦克风按钮（按住说话）→ 语音转文字发送 → 回复自动朗读。",
+  "version": "0.3.1",
+  "description": "豆包式语音对话客户端插件：麦克风按钮→语音转文字发送→回复自动朗读（支持 Edge TTS / MiMo TTS / 自定义 TTS）。",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/maoyuching/dsh-voice-chat.git"
@@ -49,7 +49,9 @@
     "tts",
     "stt",
     "edge-tts",
-    "voice-chat"
+    "voice-chat",
+    "mimo",
+    "xiaomi"
   ],
   "engines": {
     "node": ">=22"
