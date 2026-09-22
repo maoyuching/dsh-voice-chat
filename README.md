@@ -12,6 +12,7 @@
 - **语音输出**：AI 回复经 TTS 合成朗读，语速 +10%；设置里可开「**转述朗读**」（默认关闭）——开启后较长回复会先由 LLM 以"助手本人"口吻**收敛转述**（≤原文长度、不发散、去代码表格）再播报，**转述用模型自动跟随当前对话在用的 LLM**；
 - **ASR 引擎**：支持 **SiliconFlow**（SenseVoice，国内免费）、**Groq**（Whisper）、**小米 MiMo**（chat/completions 协议）、**自定义 OpenAI 兼容**端点，在设置页面切换；
 - **TTS 引擎**：支持 **Edge TTS**（微软免费）、**小米 MiMo TTS**（chat/completions 协议，内置多款中文音色）、**自定义 TTS**（OpenAI 兼容接口）；
+- **引擎配置隔离**：ASR/TTS 每个引擎各存一份 Base URL / 模型 / API Key / 音色，切换引擎不会互相覆盖（旧版单份配置自动迁移）；
 - **单信道播报**：新回复抢占旧播报、按快捷键/点按钮立即打断，同一时刻只有一种声音；
 - **防重播**：按会话记住已播报的回复，重进会话不重复朗读；
 - **静音开关** 🔊：正在播报时点它立刻静音，再点恢复自动朗读；
@@ -53,6 +54,11 @@ dsh plugin --profile web add dsh-voice-chat
 - 各引擎对应的 Base URL / 模型名 / API Key / 音色
 - 长回复转述朗读开关（默认关闭）
 
+> 🔒 **每个引擎的配置互相隔离**：ASR 的 4 个引擎、TTS 的 3 个引擎各自保存自己的
+> Base URL / 模型 / 密钥 / 音色，切换引擎只是"换看哪一份"，**不会互相覆盖**；
+> 保存时也只写当前编辑的那一份。旧版（≤0.3.x）的单份配置会在首次启动时自动
+> 迁移到对应引擎（MiMo 音色 → MiMo TTS、自定义地址/密钥 → 自定义 TTS，无损）。
+
 保存后立即生效，无需重启。
 
 ### 📄 配置文件（低优先级）
@@ -64,27 +70,34 @@ dsh plugin --profile web add dsh-voice-chat
   name: 'dsh-voice-chat'
   config:
     asrEngine: siliconflow          # siliconflow | groq | mimo | custom
-    asrApiKey: sk-xxxx              # ASR 密钥（或环境变量 DSH_VOICE_ASR_KEY）
+    asrApiKey: sk-xxxx              # ASR 密钥（旧式单槽，作用于当前引擎；或环境变量 DSH_VOICE_ASR_KEY）
     asrBaseUrl: https://api.siliconflow.cn/v1
     asrModel: FunAudioLLM/SenseVoiceSmall
+    asr:                            # 也可按引擎分别配置（优先于上面的扁平键）
+      custom: { baseUrl: http://127.0.0.1:8000/v1, model: whisper-v3, apiKey: sk-xxxx }
     llmModel: deepseek-v4-flash     # 转述模型（fallback，正常跟随当前对话）
     silenceMs: 2500
     rewrite: false                  # 转述朗读开关（默认关闭，设置页可切换）
     ttsEngine: edge                 # edge | mimo | custom
-    voice: zh-CN-XiaoxiaoNeural
-    ttsBaseUrl: https://api.openai.com/v1
+    voice: zh-CN-XiaoxiaoNeural     # Edge 音色（旧式，等价于 tts.edge.voice）
+    ttsBaseUrl: https://api.openai.com/v1   # 旧式单槽，作用于当前引擎
     ttsModel: tts-1
     ttsApiKey: sk-xxxx
+    tts:                            # 按引擎隔离的 TTS 配置（优先于上面的扁平键）
+      mimo:   { baseUrl: https://api.xiaomimimo.com/v1, model: mimo-v2.5-tts, apiKey: sk-xxxx, voice: 冰糖 }
+      custom: { baseUrl: https://api.openai.com/v1, model: tts-1, apiKey: sk-xxxx, voice: alloy }
     rate: '+10%'
     shortTextChars: 50
 ```
 
-改完重启 `dsh web` 生效。优先级：**设置面板 > cordis.patch.yml > 环境变量 > 默认值**。
+改完重启 `dsh web` 生效。优先级：**设置面板 > cordis.patch.yml（按引擎 > 旧式扁平键）> 环境变量 > 默认值**。
 
 ## 结构
 
 - `lib/index.js` — 宿主半身：`/stt`（ASR，支持 OpenAI multipart 与 MiMo chat/completions 双协议）、`/tts`（Edge/MiMo/自定义 TTS）、`/speak`（转述+合成）、`/settings`（设置面板存取）等路由；
-- `lib/client.js` — 浏览器半身：麦克风/静音按钮、静音检测、单信道播报、快捷键（Ctrl+Shift+Space）、录音自动转 WAV（供 MiMo 等 chat 协议 ASR）；并向 DSH 设置弹窗注入「voice chat」类目表单；
+- `lib/client.js` — 浏览器半身：麦克风/静音按钮、静音检测、单信道播报、快捷键（Ctrl+Shift+Space）、录音自动转 WAV（供 MiMo 等 chat 协议 ASR）；并向 DSH 设置弹窗注入「voice chat」类目表单（ASR/TTS 各引擎独立的表单槽）；
 - `lib/edge-tts.js` — 内联的 edge-tts 协议客户端（微软 Edge 免费朗读服务），唯一运行时依赖 `ws`；
+- `test/` — 设置层自测（`pnpm test` / `node test/settings.test.mjs`、`node test/client-settings.test.mjs`）：验证各引擎配置互不串味 + 旧配置迁移；
 - `cordis.patch.yml` — 插入 `dsh-voice-chat` 行 + 配置示例；
-- `settings.local.json` — 设置面板保存的覆盖配置（运行时生成，不进 git）。
+- `settings.local.json` — 设置面板保存的覆盖配置（运行时生成，不进 git）；v0.4+ 结构为 `asr.<引擎>` / `tts.<引擎>` 分槽保存。
+

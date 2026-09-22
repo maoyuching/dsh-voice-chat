@@ -136,6 +136,12 @@ dsh plugin --profile web add dsh-voice-chat
 - 各引擎对应的 Base URL / 模型名 / API Key / 音色
 - 长回复转述朗读开关（默认关闭）
 
+> 🔒 **ASR / TTS 的每个引擎都是独立配置**：切换引擎只是"换看哪一份"，各引擎的
+> Base URL / 模型 / API Key / 音色互不覆盖，保存也只写当前编辑的那一份。
+> MiMo TTS 的密钥留空时，只会沿用「MiMo ASR」那一份的密钥（同厂商），不会借用
+> 其它引擎的密钥。旧版（≤0.3.x）的单份配置首次启动时自动迁移到对应引擎：
+> 音色以 `Neural` 结尾 → Edge；MiMo 预置音色 → MiMo TTS；其余地址/密钥 → 自定义 TTS。
+
 保存后立即生效，无需重启。
 
 ### 📄 配置文件（低优先级）
@@ -148,23 +154,28 @@ dsh plugin --profile web add dsh-voice-chat
   config:
     # 语音识别设置
     asrEngine: siliconflow            # ASR 引擎：siliconflow | groq | mimo | custom
-    asrApiKey: sk-你的密钥             # ASR 密钥（或环境变量 DSH_VOICE_ASR_KEY）
+    asrApiKey: sk-你的密钥             # 旧式单槽（作用于当前引擎；或环境变量 DSH_VOICE_ASR_KEY）
     asrBaseUrl: https://api.siliconflow.cn/v1
     asrModel: FunAudioLLM/SenseVoiceSmall
+    asr:                              # 想按引擎隔离就写这里（优先于上面的扁平键）
+      custom: { baseUrl: http://127.0.0.1:8000/v1, model: whisper-v3, apiKey: sk-你的密钥 }
     llmModel: deepseek-v4-flash       # 转述模型（fallback，正常跟随当前对话）
     silenceMs: 2500                   # 静音多少毫秒后自动结束录音
     # 朗读设置
     rewrite: false                    # 转述朗读开关（默认关闭，设置页可切换）
     ttsEngine: edge                   # TTS 引擎：edge | mimo | custom
-    voice: zh-CN-XiaoxiaoNeural       # 朗读音色
-    ttsBaseUrl: https://api.openai.com/v1
+    voice: zh-CN-XiaoxiaoNeural       # Edge 音色（等价于 tts.edge.voice）
+    ttsBaseUrl: https://api.openai.com/v1   # 旧式单槽（作用于当前引擎）
     ttsModel: tts-1
     ttsApiKey: sk-你的密钥
+    tts:                              # 按引擎隔离的 TTS 配置（优先于上面的扁平键）
+      mimo:   { baseUrl: https://api.xiaomimimo.com/v1, model: mimo-v2.5-tts, apiKey: sk-你的密钥, voice: 冰糖 }
+      custom: { baseUrl: https://api.openai.com/v1, model: tts-1, apiKey: sk-你的密钥, voice: alloy }
     rate: '+10%'
     shortTextChars: 50
 ```
 
-改完**重启 `dsh web`** 生效。优先级：**设置面板 > cordis.patch.yml > 环境变量 > 默认值**。
+改完**重启 `dsh web`** 生效。优先级：**设置面板 > cordis.patch.yml（`asr.<引擎>`/`tts.<引擎>` > 旧式扁平键）> 环境变量 > 默认值**。
 
 ### 常用音色速查（Edge TTS）
 
@@ -228,6 +239,8 @@ dsh plugin --profile web add dsh-voice-chat
 | 按 🎤 没反应 | 麦克风权限未授权 | 地址栏左侧点"麦克风"允许访问 |
 | 重进会话又播报 | 跨浏览器/清了 sessionStorage | 正常：防重播按浏览器会话记忆 |
 | ASR 识别失败（400/502） | ① 密钥错误 ② MiMo ASR URL 填错（需完整 chat/completions 端点）③ 音频格式不支持 | MiMo 用户确认 URL 以 `/chat/completions` 结尾；检查密钥 |
+| 切到某引擎后密钥/地址"不像自己填的" | 旧版（≤0.3.x）把 ASR/TTS 各存一份、切引擎会互相覆盖 | v0.4+ 已按引擎分槽；旧配置首次启动自动迁移，检查 `settings.local.json` 里 `asr.<引擎>` / `tts.<引擎>` |
+| Edge TTS 报音色无效 / 播报没声音（音色是 MiMo 或自定义音色名） | 旧版 Edge/MiMo 共用同一个音色字段 | v0.4+ 音色按引擎分开；Edge 留空即用内置晓晓 |
 | 识别失败"录音格式转换失败" | blobToWav 转码出错（极少见） | 刷新页面重试；检查 F12 控制台 |
 
 **排错口令**：一切问题先看两个地方——浏览器 F12 控制台（`[dsh-voice-chat]` 前缀）与宿主日志（`%TEMP%\dsh-web-restart*.log`）。

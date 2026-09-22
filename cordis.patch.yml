@@ -8,21 +8,31 @@
 #     name: 'dsh-voice-chat'
 #     config:
 #       # 语音识别设置
-#       asrEngine: siliconflow          # siliconflow | groq | custom（语音转文字）
-#       asrApiKey: sk-xxxx              # ASR 密钥（也可用环境变量 DSH_VOICE_ASR_KEY）
+#       asrEngine: siliconflow          # siliconflow | groq | mimo | custom（语音转文字）
+#       asrApiKey: sk-xxxx              # ASR 密钥（旧式单槽：作用于当前引擎；也可用环境变量 DSH_VOICE_ASR_KEY）
 #       asrBaseUrl: https://api.siliconflow.cn/v1
 #       asrModel: FunAudioLLM/SenseVoiceSmall
+#       asr:                            # 按引擎隔离的 ASR 配置（优先于上面的扁平键）
+#         custom: { baseUrl: https://your-host/v1, model: whisper-v3, apiKey: sk-xxxx }
 #       llmModel: deepseek-v4-flash     # 回复转述模型（复用 harness 自带的 LLM，无需密钥；可选 deepseek-v4-pro）
 #       silenceMs: 2500                 # 静音多少毫秒后自动结束录音
 #       # 朗读设置
 #       rewrite: true                   # 是否用 LLM 把回复转述后再朗读
-#       ttsEngine: edge                 # TTS 引擎：edge（微软 Edge TTS，免费）| custom（自定义 TTS，OpenAI 兼容接口）
-#       voice: zh-CN-XiaoxiaoNeural     # 朗读音色（edge-tts 音色 id）
-#       ttsBaseUrl: https://api.openai.com/v1  # 自定义 TTS 的 API 地址（ttsEngine=custom 时必填）
-#       ttsModel: tts-1                 # 自定义 TTS 的模型名称（留空用内置默认）
-#       ttsApiKey: sk-xxxx              # 自定义 TTS 的 API Key（留空则沿用 ASR 密钥）
+#       ttsEngine: edge                 # TTS 引擎：edge（微软 Edge TTS，免费）| mimo | custom（自定义 TTS，OpenAI 兼容接口）
+#       voice: zh-CN-XiaoxiaoNeural     # Edge 音色（等价于 tts.edge.voice）
+#       ttsBaseUrl: https://api.openai.com/v1  # 旧式单槽：作用于当前引擎（ttsEngine=custom 时必填）
+#       ttsModel: tts-1                 # 旧式单槽模型名
+#       ttsApiKey: sk-xxxx              # 旧式单槽密钥
+#       tts:                            # 按引擎隔离的 TTS 配置（优先于上面的扁平键）
+#         edge:   { voice: zh-CN-XiaoxiaoNeural }
+#         mimo:   { baseUrl: https://api.xiaomimimo.com/v1, model: mimo-v2.5-tts, apiKey: sk-xxxx, voice: 冰糖 }
+#         custom: { baseUrl: https://api.openai.com/v1, model: tts-1, apiKey: sk-xxxx, voice: alloy }
 #       rate: '+10%'                    # 语速（'+15%' 更快，'+0%' 原速）
 #       shortTextChars: 50              # 短于此字数的回复直接原样读、不转述
+#
+# 提示：ASR/TTS 每个引擎各存一份配置（asr.<引擎> / tts.<引擎>），切换引擎不会互相
+# 覆盖；旧版扁平键仍兼容（只作用于当前选中的引擎）。设置面板（settings.local.json）
+# 优先级高于本文件。
 #
 # 不改配置时全部使用默认值（如上注释所示）。
 - insert:
