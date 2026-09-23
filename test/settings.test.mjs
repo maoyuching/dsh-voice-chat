@@ -178,9 +178,19 @@ test("回显槽按引擎各给一份，缺省补内置默认", () => {
 	assert.equal(slots.tts.mimo.model, "mimo-v2.5-tts");
 	assert.equal(slots.tts.custom.model, "kokoro-82m-zh");
 	assert.equal(slots.tts.custom.baseUrl, "http://127.0.0.1:52992/v1");
-	assert.equal(slots.tts.mimo.baseUrl, "", "MiMo 的 URL 不能被自定义 TTS 的 URL 顶掉");
+	assert.equal(slots.tts.mimo.baseUrl, "https://api.xiaomimimo.com/v1", "MiMo 留空应回落到厂商默认端点，而不是被自定义 TTS 的 URL 顶掉");
 	assert.equal(slots.asr.siliconflow.model, "FunAudioLLM/SenseVoiceSmall");
 	assert.equal(slots.asr.custom.apiKey, "flm");
+});
+
+test("MiMo TTS 不填 Base URL 也能用（内置厂商端点；回归：朗读接口 400 无声）", () => {
+	const saved = mergeSettings({}, sanitizeSettings({ ttsEngine: "mimo", tts: { mimo: { apiKey: "k" } } }));
+	const cfg = resolveTtsConfig({}, saved, "mimo", "");
+	assert.equal(cfg.baseUrl, "https://api.xiaomimimo.com/v1", "留空应回落到厂商默认端点");
+	assert.equal(cfg.model, "mimo-v2.5-tts");
+	assert.equal(cfg.apiKey, "k");
+	// 自定义 TTS 没有厂商默认端点：仍必须显式填写，报错才明确
+	assert.equal(resolveTtsConfig({}, saved, "custom", "").baseUrl, "");
 });
 
 test("行 config 支持按引擎隔离配置，也能被设置面板覆盖", () => {

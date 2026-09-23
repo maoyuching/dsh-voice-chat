@@ -98,6 +98,7 @@ dsh plugin --profile web add dsh-voice-chat
 - `lib/client.js` — 浏览器半身：麦克风/静音按钮、静音检测、单信道播报、快捷键（Ctrl+Shift+Space）、录音自动转 WAV（供 MiMo 等 chat 协议 ASR）；并向 DSH 设置弹窗注入「voice chat」类目表单（ASR/TTS 各引擎独立的表单槽）；
 - `lib/edge-tts.js` — 内联的 edge-tts 协议客户端（微软 Edge 免费朗读服务），唯一运行时依赖 `ws`；
 - `test/` — 设置层自测（`pnpm test` / `node test/settings.test.mjs`、`node test/client-settings.test.mjs`）：验证各引擎配置互不串味 + 旧配置迁移；
+- `test/diagnose-tts.mjs` — 朗读链路一键诊断（`node test/diagnose-tts.mjs`）：逐个引擎真实合成一次，并直连插件 `/tts`、`/speak` 处理函数，逐段报出问题在配置、密钥、接口还是宿主进程出网；
 - `cordis.patch.yml` — 插入 `dsh-voice-chat` 行 + 配置示例；
 - `settings.local.json` — 设置面板保存的覆盖配置（运行时生成，不进 git）；v0.4+ 结构为 `asr.<引擎>` / `tts.<引擎>` 分槽保存。
 

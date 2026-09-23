@@ -235,7 +235,9 @@ dsh plugin --profile web add dsh-voice-chat
 | 问题 | 原因 | 解决 |
 |---|---|---|
 | 播报听到的是**原文一字一句** | ① 回复 ≤50 字（设计如此）② 转述开关默认关闭 | 设置 → voice chat 勾选「长回复先转述」 |
-| 完全没声音 | ① 浏览器不支持/权限被拒 ② 静音 🔇 状态 | 检查按钮是否 🔇；F12 控制台看 `[dsh-voice-chat]` 报错 |
+| 完全没声音 | ① 浏览器不支持/权限被拒 ② 静音 🔇 状态 ③ 当前 TTS 引擎没配好（见下一行） | 先看按钮 🔇；再跑 `node test/diagnose-tts.mjs` 看哪个引擎报什么错 |
+| 有提示音但**读不出来**（或只剩浏览器机器人音） | TTS 引擎/地址/密钥没配好：接口报 400/502 时，前端会依次降级到 `/tts`、最后用浏览器 TTS 兜底 | 打开设置 → voice chat → 朗读设置，确认「当前引擎」那一份的 Base URL / API Key；MiMo 的 Base URL 可留空（默认 https://api.xiaomimimo.com/v1） |
+| MiMo/云端 TTS 报"响应里没有音频数据"/"返回空响应" | 宿主进程那层网络把**压缩响应**的 body 吃成空（同一请求脱离 dsh 直连正常） | v0.4.1 起插件对出网请求带 `Accept-Encoding: identity` 并要求不压缩；仍失败时按报错里的 `HTTP/状态/content-encoding/body` 定位 |
 | 按 🎤 没反应 | 麦克风权限未授权 | 地址栏左侧点"麦克风"允许访问 |
 | 重进会话又播报 | 跨浏览器/清了 sessionStorage | 正常：防重播按浏览器会话记忆 |
 | ASR 识别失败（400/502） | ① 密钥错误 ② MiMo ASR URL 填错（需完整 chat/completions 端点）③ 音频格式不支持 | MiMo 用户确认 URL 以 `/chat/completions` 结尾；检查密钥 |
@@ -244,6 +246,24 @@ dsh plugin --profile web add dsh-voice-chat
 | 识别失败"录音格式转换失败" | blobToWav 转码出错（极少见） | 刷新页面重试；检查 F12 控制台 |
 
 **排错口令**：一切问题先看两个地方——浏览器 F12 控制台（`[dsh-voice-chat]` 前缀）与宿主日志（`%TEMP%\dsh-web-restart*.log`）。
+
+**朗读链路一键诊断**（推荐先跑这个）：
+
+```bash
+cd <插件目录>            # 例如 D:\Code\dsh-voice-chat
+node test/diagnose-tts.mjs
+```
+
+它会读 `settings.local.json` 的生效配置，逐个引擎**真实打一次合成请求**，并直接调用插件的 `/tts`、`/speak` 处理函数，输出形如：
+
+```
+=== 生效配置 ===   TTS 引擎: mimo …
+=== 1. Edge TTS（微软免费）===    ✓ 合成成功 14544 字节 → %TEMP%\dsh-tts-edge.mp3
+=== 2. MiMo TTS ===               ✓ / ✗ HTTP 4xx: …
+=== 5. 宿主路由实测 ===            GET /tts → 200，音频 16056 字节
+```
+
+哪一步 ✗ 就是断点：配置缺失看第 1 段，密钥/接口看第 2、3 段，宿主进程网络看第 5 段（若这里 ✗ 而第 2 段直连 ✓，说明是**宿主进程的出网/代理**把响应吃掉了，而不是插件配置错）。
 
 ---
 

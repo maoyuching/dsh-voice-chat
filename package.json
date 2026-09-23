@@ -1,6 +1,6 @@
 {
   "name": "dsh-voice-chat",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "豆包式语音对话客户端插件：麦克风按钮→语音转文字发送→回复自动朗读（支持 Edge TTS / MiMo TTS / 自定义 TTS）。",
   "repository": {
     "type": "git",

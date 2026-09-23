@@ -161,6 +161,20 @@ try {
 		assert.equal(fourth.ttsConfig.mimo.voice, "茉莉");
 		assert.equal(fourth.ttsConfig.custom.apiKey, "custom-key", "自定义 TTS 应保持不变");
 	});
+
+	console.log("\n回归：MiMo TTS 不填 Base URL 不再报“未配置 Base URL”（离线检查）");
+	// 清掉 MiMo 密钥（离线可控）：此时应报“未配置 API Key”，说明地址已回落到厂商默认
+	await postSettings({ ttsEngine: "mimo", tts: { mimo: { baseUrl: "", apiKey: "" } } });
+	const failRes = fakeRes();
+	await routes.get("/dsh-voice-chat/tts")(
+		fakeReq("GET", "/dsh-voice-chat/tts?text=" + encodeURIComponent("测试")), failRes
+	);
+	check("地址缺省时错误指向密钥而不是地址", () => {
+		assert.equal(failRes.captured.status, 400);
+		const err = JSON.parse(String(failRes.captured.body)).error;
+		assert.match(err, /API Key/, `错误应提示密钥：${err}`);
+		assert.doesNotMatch(err, /Base URL/, "不应再因为空 Base URL 直接失败");
+	});
 } finally {
 	if (original === null) await rm(SETTINGS_FILE, { force: true });
 	else await writeFile(SETTINGS_FILE, original, "utf8");
