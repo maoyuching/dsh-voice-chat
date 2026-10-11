@@ -32,7 +32,7 @@ try {
 	console.log(`（未找到 ${SETTINGS_FILE}，按默认值诊断）`);
 }
 const saved = migrateLegacySettings(raw);
-const active = saved.ttsEngine || "edge";
+const active = saved.ttsEngine || "mimo";
 
 console.log("=== 生效配置 ===");
 console.log(`TTS 引擎: ${active}`);
@@ -40,7 +40,7 @@ for (const engine of ["edge", "mimo", "custom"]) {
 	const s = slot(saved, engine);
 	console.log(`  [${engine}] baseUrl=${pick(s.baseUrl, TTS_DEFAULTS[engine].baseUrl) || "(空)"} model=${pick(s.model, TTS_DEFAULTS[engine].model) || "(空)"} voice=${pick(s.voice, TTS_DEFAULTS[engine].voice) || "(空)"} apiKey=${mask(pick(s.apiKey, ""))}`);
 }
-console.log(`ASR 引擎: ${saved.asrEngine || "siliconflow"}`);
+console.log(`ASR 引擎: ${saved.asrEngine || "mimo"}`);
 
 const out = (name, buf) => {
 	const file = path.join(process.env.TEMP || ".", name);

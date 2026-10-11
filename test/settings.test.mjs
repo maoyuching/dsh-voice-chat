@@ -212,8 +212,8 @@ test("旧式扁平 config 键仍可用（作用于当前引擎）", () => {
 
 test("非法引擎名/非法字段被丢弃", () => {
 	const saved = mergeSettings({}, sanitizeSettings({ ttsEngine: "gemini", tts: { gemini: { apiKey: "x" }, mimo: { bogus: "y", apiKey: "k" } }, asrEngine: "foo" }));
-	assert.equal(saved.ttsEngine, "edge");
-	assert.equal(saved.asrEngine, "siliconflow");
+	assert.equal(saved.ttsEngine, "mimo");
+	assert.equal(saved.asrEngine, "mimo");
 	assert.equal(saved.tts.gemini, undefined);
 	assert.deepEqual(saved.tts.mimo, { apiKey: "k" });
 });
