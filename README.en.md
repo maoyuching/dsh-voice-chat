@@ -98,6 +98,7 @@ Restart `dsh web` after editing. Priority: **settings panel > cordis.patch.yml (
 - `lib/index.js` — host half: routes `/stt` (ASR, dual-protocol: OpenAI multipart + MiMo chat/completions), `/tts` (Edge/MiMo/custom TTS), `/speak` (rewrite + synthesize), `/settings` (settings panel persistence);
 - `lib/client.js` — browser half: mic/mute buttons, silence detection, single-channel playback, hotkeys (Ctrl+Shift+Space), auto WAV conversion for chat-protocol ASR; injects the "voice chat" settings section into DSH's settings dialog;
 - `lib/edge-tts.js` — inline edge-tts protocol client (Microsoft Edge free read-aloud); the only runtime dependency is `ws`;
-- `test/` — settings-layer tests (`pnpm test`): per-engine isolation + legacy config migration;
+- `test/diagnose-tts.mjs` — one-shot playback-chain diagnosis (`node test/diagnose-tts.mjs`): synthesizes once per engine and calls the plugin's own `/tts` and `/speak` handlers, showing whether the break is config, key, endpoint, or the host process's outbound network. **Shipped with the package**;
+- `test/*.test.mjs` + `test/host-smoke.mjs` — settings-layer tests (`npm test`: per-engine isolation, legacy config migration, form refill, `/settings` route smoke). **Repo-only, not published**: host-smoke temporarily moves `settings.local.json`, so it should not run inside someone's installed copy;
 - `cordis.patch.yml` — inserts the `dsh-voice-chat` line + config example;
 - `settings.local.json` — overrides saved from the settings dialog (generated at runtime, never committed); since v0.4 it stores per-engine slots under `asr.<engine>` / `tts.<engine>`.

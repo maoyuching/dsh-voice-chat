@@ -265,6 +265,11 @@ node test/diagnose-tts.mjs
 
 哪一步 ✗ 就是断点：配置缺失看第 1 段，密钥/接口看第 2、3 段，宿主进程网络看第 5 段（若这里 ✗ 而第 2 段直连 ✓，说明是**宿主进程的出网/代理**把响应吃掉了，而不是插件配置错）。
 
+> 该诊断脚本随包发布（npm 安装后在 `node_modules/dsh-voice-chat/test/diagnose-tts.mjs`）。
+> `test/` 下的三个测试（`settings.test.mjs`、`client-settings.test.mjs`、`host-smoke.mjs`）
+> 只在仓库里，不随包发布——其中 host-smoke 会临时挪动 `settings.local.json`，
+> 不适合在已安装的目录里跑（开发时在仓库根目录 `npm test` 即可）。
+
 ---
 
 ## 十、安全提示

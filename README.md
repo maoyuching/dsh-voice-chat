@@ -97,8 +97,8 @@ dsh plugin --profile web add dsh-voice-chat
 - `lib/index.js` — 宿主半身：`/stt`（ASR，支持 OpenAI multipart 与 MiMo chat/completions 双协议）、`/tts`（Edge/MiMo/自定义 TTS）、`/speak`（转述+合成）、`/settings`（设置面板存取）等路由；
 - `lib/client.js` — 浏览器半身：麦克风/静音按钮、静音检测、单信道播报、快捷键（Ctrl+Shift+Space）、录音自动转 WAV（供 MiMo 等 chat 协议 ASR）；并向 DSH 设置弹窗注入「voice chat」类目表单（ASR/TTS 各引擎独立的表单槽）；
 - `lib/edge-tts.js` — 内联的 edge-tts 协议客户端（微软 Edge 免费朗读服务），唯一运行时依赖 `ws`；
-- `test/` — 设置层自测（`pnpm test` / `node test/settings.test.mjs`、`node test/client-settings.test.mjs`）：验证各引擎配置互不串味 + 旧配置迁移；
-- `test/diagnose-tts.mjs` — 朗读链路一键诊断（`node test/diagnose-tts.mjs`）：逐个引擎真实合成一次，并直连插件 `/tts`、`/speak` 处理函数，逐段报出问题在配置、密钥、接口还是宿主进程出网；
+- `test/diagnose-tts.mjs` — 朗读链路一键诊断（`node test/diagnose-tts.mjs`）：逐个引擎真实合成一次，并直连插件 `/tts`、`/speak` 处理函数，逐段报出问题在配置、密钥、接口还是宿主进程出网。**这个脚本随包发布**，npm 装完可直接在插件目录里跑；
+- `test/*.test.mjs` + `test/host-smoke.mjs` — 设置层自测（`npm test`：引擎配置互不串味、旧配置迁移、表单回填、`/settings` 路由冒烟）。**仅仓库内使用，不随包发布**：其中 host-smoke 会临时挪动 `settings.local.json`，不适合在别人的安装目录里跑；
 - `cordis.patch.yml` — 插入 `dsh-voice-chat` 行 + 配置示例；
 - `settings.local.json` — 设置面板保存的覆盖配置（运行时生成，不进 git）；v0.4+ 结构为 `asr.<引擎>` / `tts.<引擎>` 分槽保存。
 
