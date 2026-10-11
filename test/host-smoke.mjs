@@ -133,7 +133,7 @@ try {
 	await postSettings({
 		asrEngine: "custom",
 		ttsEngine: "custom",
-		tts: { custom: { baseUrl: "http://127.0.0.1:52992/v1", model: "kokoro-82m-zh", apiKey: "custom-key", voice: "Mia" } }
+		tts: { custom: { baseUrl: "http://127.0.0.1:8081/v1", model: "kokoro-82m-zh", apiKey: "custom-key", voice: "Mia" } }
 	});
 	const third = await getSettings();
 	check("自定义 TTS 与 MiMo TTS 互不覆盖", () => {

@@ -28,15 +28,15 @@ function test(name, fn) {
 
 // 用户实际遇到的旧配置：MiMo 的凭据被"自定义 TTS"覆盖、音色残留在另一引擎
 const LEGACY_USER_FILE = {
-	asrBaseUrl: "http://127.0.0.1:52625/v1",
+	asrBaseUrl: "http://127.0.0.1:8080/v1",
 	asrModel: "whisper-v3",
-	asrApiKey: "flm",
+	asrApiKey: "test-asr-key",
 	ttsVoice: "Mia",
 	autoSend: false,
 	silenceMs: 2000,
 	rewrite: true,
 	ttsEngine: "edge",
-	ttsBaseUrl: "http://127.0.0.1:52992/v1",
+	ttsBaseUrl: "http://127.0.0.1:8081/v1",
 	ttsModel: "kokoro-82m-zh",
 	ttsApiKey: "sk-custom",
 	asrEngine: "custom"
@@ -46,9 +46,9 @@ console.log("旧版扁平配置 → 按引擎分槽迁移");
 test("ASR 凭据归到选中的 custom 引擎", () => {
 	const m = migrateLegacySettings(LEGACY_USER_FILE);
 	assert.deepEqual(m.asr.custom, {
-		baseUrl: "http://127.0.0.1:52625/v1",
+		baseUrl: "http://127.0.0.1:8080/v1",
 		model: "whisper-v3",
-		apiKey: "flm"
+		apiKey: "test-asr-key"
 	});
 	assert.equal(m.asr.mimo, undefined);
 	assert.equal(m.asr.siliconflow, undefined);
@@ -57,7 +57,7 @@ test("ASR 凭据归到选中的 custom 引擎", () => {
 test("TTS 本地凭据归 custom、MiMo 音色 Mia 归 mimo（关键修复）", () => {
 	const m = migrateLegacySettings(LEGACY_USER_FILE);
 	assert.deepEqual(m.tts.custom, {
-		baseUrl: "http://127.0.0.1:52992/v1",
+		baseUrl: "http://127.0.0.1:8081/v1",
 		model: "kokoro-82m-zh",
 		apiKey: "sk-custom"
 	});
@@ -93,23 +93,23 @@ test("先配 MiMo、再配自定义 TTS，两边各留各的", () => {
 	}));
 	saved = mergeSettings(saved, sanitizeSettings({
 		ttsEngine: "custom",
-		tts: { custom: { baseUrl: "http://127.0.0.1:52992/v1", model: "kokoro-82m-zh", apiKey: "custom-key", voice: "Mia" } }
+		tts: { custom: { baseUrl: "http://127.0.0.1:8081/v1", model: "kokoro-82m-zh", apiKey: "custom-key", voice: "Mia" } }
 	}));
 	assert.equal(saved.ttsEngine, "custom");
 	assert.deepEqual(saved.tts.mimo, { baseUrl: "https://api.xiaomimimo.com/v1", model: "mimo-v2.5-tts", apiKey: "mimo-key", voice: "冰糖" });
-	assert.deepEqual(saved.tts.custom, { baseUrl: "http://127.0.0.1:52992/v1", model: "kokoro-82m-zh", apiKey: "custom-key", voice: "Mia" });
+	assert.deepEqual(saved.tts.custom, { baseUrl: "http://127.0.0.1:8081/v1", model: "kokoro-82m-zh", apiKey: "custom-key", voice: "Mia" });
 	// 各引擎解析出的也是各自的值
 	const cfg = {};
 	assert.equal(resolveTtsConfig(cfg, saved, "mimo", "zh-CN-XiaoxiaoNeural").apiKey, "mimo-key");
 	assert.equal(resolveTtsConfig(cfg, saved, "custom", "zh-CN-XiaoxiaoNeural").apiKey, "custom-key");
-	assert.equal(resolveTtsConfig(cfg, saved, "custom", "zh-CN-XiaoxiaoNeural").baseUrl, "http://127.0.0.1:52992/v1");
+	assert.equal(resolveTtsConfig(cfg, saved, "custom", "zh-CN-XiaoxiaoNeural").baseUrl, "http://127.0.0.1:8081/v1");
 });
 
 test("改 MiMo 的密钥不会动 ASR 或自定义 TTS", () => {
 	let saved = mergeSettings({}, sanitizeSettings({
 		asrEngine: "custom",
-		asr: { custom: { baseUrl: "http://127.0.0.1:52625/v1", model: "whisper-v3", apiKey: "flm" } },
-		tts: { custom: { baseUrl: "http://127.0.0.1:52992/v1", model: "kokoro-82m-zh", apiKey: "custom-key" } }
+		asr: { custom: { baseUrl: "http://127.0.0.1:8080/v1", model: "whisper-v3", apiKey: "test-asr-key" } },
+		tts: { custom: { baseUrl: "http://127.0.0.1:8081/v1", model: "kokoro-82m-zh", apiKey: "custom-key" } }
 	}));
 	const before = JSON.parse(JSON.stringify(saved));
 	saved = mergeSettings(saved, sanitizeSettings({ tts: { mimo: { apiKey: "mimo-key2" } } }));
@@ -149,7 +149,7 @@ test("扁平键只落到当前选中的引擎槽里", () => {
 
 test("Edge 不接收旧版的 URL/模型/密钥（只收音色）", () => {
 	const saved = mergeSettings({}, sanitizeSettings({
-		ttsEngine: "edge", ttsBaseUrl: "http://127.0.0.1:52992/v1", ttsModel: "kokoro", ttsApiKey: "k", ttsVoice: "zh-CN-XiaoxiaoNeural"
+		ttsEngine: "edge", ttsBaseUrl: "http://127.0.0.1:8081/v1", ttsModel: "kokoro", ttsApiKey: "k", ttsVoice: "zh-CN-XiaoxiaoNeural"
 	}));
 	assert.deepEqual(saved.tts.edge, { voice: "zh-CN-XiaoxiaoNeural" });
 	assert.equal(saved.tts.custom, undefined);
@@ -165,7 +165,7 @@ test("保存结果里不再保留旧版扁平键", () => {
 test("老客户端只改静音时长也不会丢配置", () => {
 	const saved = mergeSettings(LEGACY_USER_FILE, sanitizeSettings({ silenceMs: 3000 }));
 	assert.equal(saved.silenceMs, 3000);
-	assert.equal(saved.asr.custom.apiKey, "flm");
+	assert.equal(saved.asr.custom.apiKey, "test-asr-key");
 	assert.equal(saved.tts.custom.model, "kokoro-82m-zh");
 	assert.equal(saved.tts.mimo.voice, "Mia");
 });
@@ -177,10 +177,10 @@ test("回显槽按引擎各给一份，缺省补内置默认", () => {
 	assert.equal(slots.tts.edge.voice, "zh-CN-XiaoxiaoNeural");
 	assert.equal(slots.tts.mimo.model, "mimo-v2.5-tts");
 	assert.equal(slots.tts.custom.model, "kokoro-82m-zh");
-	assert.equal(slots.tts.custom.baseUrl, "http://127.0.0.1:52992/v1");
+	assert.equal(slots.tts.custom.baseUrl, "http://127.0.0.1:8081/v1");
 	assert.equal(slots.tts.mimo.baseUrl, "https://api.xiaomimimo.com/v1", "MiMo 留空应回落到厂商默认端点，而不是被自定义 TTS 的 URL 顶掉");
 	assert.equal(slots.asr.siliconflow.model, "FunAudioLLM/SenseVoiceSmall");
-	assert.equal(slots.asr.custom.apiKey, "flm");
+	assert.equal(slots.asr.custom.apiKey, "test-asr-key");
 });
 
 test("MiMo TTS 不填 Base URL 也能用（内置厂商端点；回归：朗读接口 400 无声）", () => {
@@ -221,10 +221,10 @@ test("非法引擎名/非法字段被丢弃", () => {
 test("ASR 解析：各引擎只读自己的槽", () => {
 	const saved = mergeSettings({}, sanitizeSettings({
 		asrEngine: "custom",
-		asr: { custom: { baseUrl: "http://127.0.0.1:52625/v1", model: "whisper-v3", apiKey: "flm" }, groq: { apiKey: "gsk-x" } }
+		asr: { custom: { baseUrl: "http://127.0.0.1:8080/v1", model: "whisper-v3", apiKey: "test-asr-key" }, groq: { apiKey: "gsk-x" } }
 	}));
 	assert.equal(resolveAsrConfig({}, saved).engine, "custom");
-	assert.equal(resolveAsrConfig({}, saved).apiKey, "flm");
+	assert.equal(resolveAsrConfig({}, saved).apiKey, "test-asr-key");
 	const groqSaved = { ...saved, asrEngine: "groq" };
 	assert.equal(resolveAsrConfig({}, groqSaved).apiKey, "gsk-x");
 	assert.equal(resolveAsrConfig({}, groqSaved).baseUrl, "https://api.groq.com/openai/v1");

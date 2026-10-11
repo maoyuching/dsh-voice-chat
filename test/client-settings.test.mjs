@@ -138,9 +138,9 @@ function onChangeOf(tree, labelText) {
 const HOST_SETTINGS = {
 	version: "0.4.0",
 	asrEngine: "custom",
-	asrBaseUrl: "http://127.0.0.1:52625/v1",
+	asrBaseUrl: "http://127.0.0.1:8080/v1",
 	asrModel: "whisper-v3",
-	asrApiKey: "flm",
+	asrApiKey: "test-asr-key",
 	autoSend: false,
 	silenceMs: 2000,
 	rewrite: true,
@@ -153,12 +153,12 @@ const HOST_SETTINGS = {
 		siliconflow: { baseUrl: "https://api.siliconflow.cn/v1", model: "FunAudioLLM/SenseVoiceSmall", apiKey: "" },
 		groq: { baseUrl: "https://api.groq.com/openai/v1", model: "whisper-large-v3-turbo", apiKey: "" },
 		mimo: { baseUrl: "https://api.xiaomimimo.com/v1/chat/completions", model: "mimo-v2.5-asr", apiKey: "" },
-		custom: { baseUrl: "http://127.0.0.1:52625/v1", model: "whisper-v3", apiKey: "flm" }
+		custom: { baseUrl: "http://127.0.0.1:8080/v1", model: "whisper-v3", apiKey: "test-asr-key" }
 	},
 	ttsConfig: {
 		edge: { baseUrl: "", model: "", apiKey: "", voice: "zh-CN-YunxiNeural" },
 		mimo: { baseUrl: "https://api.xiaomimimo.com/v1", model: "mimo-v2.5-tts", apiKey: "mimo-key", voice: "冰糖" },
-		custom: { baseUrl: "http://127.0.0.1:52992/v1", model: "kokoro-82m-zh", apiKey: "custom-key", voice: "Mia" }
+		custom: { baseUrl: "http://127.0.0.1:8081/v1", model: "kokoro-82m-zh", apiKey: "custom-key", voice: "Mia" }
 	}
 };
 
@@ -230,7 +230,7 @@ await test("当前引擎 MiMo：显示 MiMo 自己的地址/密钥/音色", () =
 await test("切到自定义 TTS：显示自定义自己的配置，看不到 MiMo 的值", () => {
 	onChangeOf(tree, "TTS 引擎")({ target: { value: "custom" } });
 	tree = renderOnce(Section, stub);
-	assert.equal(controlByLabel(tree, "TTS Base URL").props.value, "http://127.0.0.1:52992/v1");
+	assert.equal(controlByLabel(tree, "TTS Base URL").props.value, "http://127.0.0.1:8081/v1");
 	assert.equal(controlByLabel(tree, "TTS 模型名称").props.value, "kokoro-82m-zh");
 	assert.equal(controlByLabel(tree, "TTS API Key").props.value, "custom-key");
 	assert.equal(controlByLabel(tree, "朗读音色（自定义 TTS）").props.value, "Mia");
@@ -251,15 +251,15 @@ await test("切回 MiMo：MiMo 的配置原封不动（没被 custom 覆盖）",
 });
 
 await test("改 ASR 引擎看各自槽：custom 与 mimo 互不影响", () => {
-	assert.equal(controlByLabel(tree, "ASR Base URL").props.value, "http://127.0.0.1:52625/v1");
-	assert.equal(controlByLabel(tree, "ASR API Key").props.value, "flm");
+	assert.equal(controlByLabel(tree, "ASR Base URL").props.value, "http://127.0.0.1:8080/v1");
+	assert.equal(controlByLabel(tree, "ASR API Key").props.value, "test-asr-key");
 	onChangeOf(tree, "ASR 引擎")({ target: { value: "mimo" } });
 	tree = renderOnce(Section, stub);
 	assert.equal(controlByLabel(tree, "ASR Base URL").props.value, "https://api.xiaomimimo.com/v1/chat/completions");
 	assert.equal(controlByLabel(tree, "ASR API Key").props.value, "");
 	onChangeOf(tree, "ASR 引擎")({ target: { value: "custom" } });
 	tree = renderOnce(Section, stub);
-	assert.equal(controlByLabel(tree, "ASR API Key").props.value, "flm");
+	assert.equal(controlByLabel(tree, "ASR API Key").props.value, "test-asr-key");
 });
 
 console.log("\n保存只提交当前引擎的槽");
@@ -291,7 +291,7 @@ await test("保存 MiMo：tts 里只有 mimo，ASR 只有自定义那份", async
 	assert.equal(body.ttsBaseUrl, "https://api.xiaomimimo.com/v1");
 	assert.equal(body.ttsApiKey, "mimo-key");
 	assert.equal(body.ttsVoice, "冰糖");
-	assert.equal(body.asrBaseUrl, "http://127.0.0.1:52625/v1");
+	assert.equal(body.asrBaseUrl, "http://127.0.0.1:8080/v1");
 });
 
 await test("切到 Edge 后保存：只交音色，不带 MiMo/自定义的地址与密钥", async () => {
@@ -314,9 +314,9 @@ await test("切到 Edge 后保存：只交音色，不带 MiMo/自定义的地�
 console.log("\n旧宿主回显（没有 asrConfig/ttsConfig）时的兜底");
 await test("旧宿主只给扁平键：只当成当前引擎的槽值", async () => {
 	const legacy = {
-		asrEngine: "custom", asrBaseUrl: "http://127.0.0.1:52625/v1", asrModel: "whisper-v3", asrApiKey: "flm",
+		asrEngine: "custom", asrBaseUrl: "http://127.0.0.1:8080/v1", asrModel: "whisper-v3", asrApiKey: "test-asr-key",
 		ttsEngine: "edge", ttsVoice: "zh-CN-XiaoxiaoNeural",
-		ttsBaseUrl: "http://127.0.0.1:52992/v1", ttsModel: "kokoro-82m-zh", ttsApiKey: "custom-key"
+		ttsBaseUrl: "http://127.0.0.1:8081/v1", ttsModel: "kokoro-82m-zh", ttsApiKey: "custom-key"
 	};
 	const stub2 = createReactStub();
 	const Section2 = await loadSettingsSection(stub2, () => Promise.resolve({
@@ -331,7 +331,7 @@ await test("旧宿主只给扁平键：只当成当前引擎的槽值", async ()
 	onChangeOf(t2, "TTS 引擎")({ target: { value: "custom" } });
 	t2 = renderOnce(Section2, stub2);
 	assert.equal(controlByLabel(t2, "TTS Base URL").props.value, "", "旧宿主的扁平地址只能归当前引擎(edge)，不能凭空当成 custom 的");
-	assert.equal(controlByLabel(t2, "ASR Base URL").props.value, "http://127.0.0.1:52625/v1", "ASR 当前引擎是 custom，扁平键归它");
+	assert.equal(controlByLabel(t2, "ASR Base URL").props.value, "http://127.0.0.1:8080/v1", "ASR 当前引擎是 custom，扁平键归它");
 });
 
 console.log(`\n${passed} 项通过${process.exitCode ? "（存在失败）" : ""}`);
