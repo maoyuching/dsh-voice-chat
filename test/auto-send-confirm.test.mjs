@@ -381,8 +381,9 @@ await test("识别完成后：文字先放进输入框，但不立刻发送", ()
 	assert.equal(inputState.draft, "今天天气不错", "输入框里应有转写内容");
 });
 
-await test("确认条出现了：显示倒计时和「取消」", () => {
-	assert.ok(findByText(tree, "秒后自动发送"), "应显示倒计时文案");
+await test("确认条出现了：待发送内容直接摆在条子上 + 倒计时 + 「取消」", () => {
+	assert.ok(findByText(tree, "今天天气不错"), "条子上应直接显示待发送内容（不用在条子和输入框之间来回看）");
+	assert.ok(findByText(tree, "秒后发送"), "应显示倒计时");
 	const cancel = findButtonByText(tree, "取消");
 	assert.ok(cancel, "应有「取消」按钮");
 	assert.equal(cancel.type, "button");
@@ -394,7 +395,7 @@ await test("点「取消」→ 不发送，文字留在输入框", () => {
 	tree = render();
 	assert.equal(sent.length, before, "取消后不能发送");
 	assert.equal(inputState.draft, "今天天气不错", "取消后文字应留在输入框里（还能改）");
-	assert.equal(findByText(tree, "秒后自动发送"), null, "取消后确认条应消失");
+	assert.equal(findByText(tree, "秒后发送"), null, "取消后确认条应消失");
 });
 
 await test("倒计时走完 5 秒 → 自动发送一次", async () => {
@@ -407,7 +408,7 @@ await test("倒计时走完 5 秒 → 自动发送一次", async () => {
 	assert.equal(sent.length, before + 1, `到点应自动发送一次（sent=${sent.length} before=${before}）`);
 	assert.equal(sent[sent.length - 1], "今天天气不错");
 	tree = render();
-	assert.equal(findByText(tree, "秒后自动发送"), null, "发送后确认条应消失");
+	assert.equal(findByText(tree, "秒后发送"), null, "发送后确认条应消失");
 });
 
 await test("倒计时期间用户自己发了 → 不会再自动发第二次", async () => {
