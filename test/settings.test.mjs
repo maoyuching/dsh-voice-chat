@@ -5,6 +5,8 @@
 import assert from "node:assert/strict";
 import {
 	buildPublicSlots,
+	buildRewriteSystemPrompt,
+	hasCustomRewritePrompt,
 	migrateLegacySettings,
 	mergeSettings,
 	resolveAsrConfig,
@@ -261,6 +263,28 @@ test("转述提示词：设置面板保存/回显，空串能存住（清空即�
 	const kept = mergeSettings(saved, sanitizeSettings({ autoSend: false }));
 	assert.equal(kept.rewritePrompt, "转述成严肃认真");
 	assert.equal(kept.autoSend, false);
+});
+
+test("自定义提示词：补上输出格式约束（防前言/markdown），内置提示词不加", () => {
+	const custom = "转述成活泼可爱一点";
+	const p = buildRewriteSystemPrompt({}, { rewritePrompt: custom });
+	assert.ok(p.startsWith(custom), "用户写的提示词要放在最前面");
+	assert.ok(p.includes("只输出"), "要补上「只输出文本本身」的格式约束，否则模型爱加前言");
+	assert.ok(p.includes("markdown"), "格式约束里要点名 markdown");
+	// 内置提示词原样（它本身已写全格式与长度约束，不重复加）
+	assert.equal(buildRewriteSystemPrompt({}, {}), SPEAK_SYSTEM_PROMPT);
+	assert.equal(buildRewriteSystemPrompt({}, { rewritePrompt: "" }), SPEAK_SYSTEM_PROMPT);
+	// 行 config 里的自定义提示词同样算自定义
+	assert.ok(buildRewriteSystemPrompt({ rewritePrompt: "行配置里的" }, {}).includes("行配置里的"));
+});
+
+test("是否用了自定义提示词", () => {
+	assert.equal(hasCustomRewritePrompt({}, {}), false);
+	assert.equal(hasCustomRewritePrompt({}, { rewritePrompt: "  " }), false);
+	assert.equal(hasCustomRewritePrompt({}, { rewritePrompt: "x" }), true);
+	assert.equal(hasCustomRewritePrompt({ rewritePrompt: "y" }, {}), true);
+	// 行 config 的自定义不会被设置面板的空值覆盖掉
+	assert.equal(hasCustomRewritePrompt({ rewritePrompt: "y" }, { rewritePrompt: "" }), true);
 });
 
 console.log(`\n${passed} 项通过${process.exitCode ? "（存在失败）" : ""}`);

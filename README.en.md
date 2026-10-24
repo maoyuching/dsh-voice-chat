@@ -57,7 +57,10 @@ Open DSH's settings dialog (gear icon, bottom-left) → "**voice chat**" on the 
 - Condensed reading toggle (off by default)
 - **Rewrite prompt (optional)**: a text box appears once the toggle is on, so you can
   define the "recipe" of the rewrite (e.g. "make it playful" / "make it formal").
-  **Leaving it empty uses the built-in preset prompt**; filling it replaces the preset.
+  **Leaving it empty uses the built-in preset prompt**; filling it replaces the preset
+  (a "text only, no preamble" output-format rule is appended automatically).
+- **Try it**: a "Try it" button under the prompt runs the rewrite on a sample sentence
+  and shows the result, so you can see what your prompt actually produces.
 
 > 🔒 **Per-engine isolation**: each of the 4 ASR engines and 3 TTS engines keeps its own
 > Base URL / model / API key / voice. Switching engines only switches which slot you are

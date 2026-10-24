@@ -51,6 +51,7 @@ function fakeReq(method, url, body) {
 }
 
 const routes = new Map();
+let lastLlmCall = null;
 const httpCtx = {
 	webServer: {
 		register(entry) {
@@ -60,7 +61,15 @@ const httpCtx = {
 	},
 	effect(fn) { return fn(); },
 	get() { return undefined; },
-	llm: { stream() { throw new Error("not used in smoke test"); } },
+	llm: {
+		stream(opts) {
+			lastLlmCall = opts;
+			return (async function* () {
+				yield { type: "text-delta", text: "转述后的内容" };
+				yield { type: "finish", reason: { kind: "stop" } };
+			})();
+		}
+	},
 	sessions: {}
 };
 const ctx = {
@@ -72,6 +81,7 @@ assert.ok(routes.has("/dsh-voice-chat/settings"), "应注册 /settings 路由");
 assert.ok(routes.has("/dsh-voice-chat/stt"), "应注册 /stt 路由");
 assert.ok(routes.has("/dsh-voice-chat/tts"), "应注册 /tts 路由");
 assert.ok(routes.has("/dsh-voice-chat/speak"), "应注册 /speak 路由");
+assert.ok(routes.has("/dsh-voice-chat/rewrite"), "应注册 /rewrite 路由");
 
 async function getSettings() {
 	const res = fakeRes();
@@ -161,6 +171,39 @@ try {
 		assert.equal(fourth.ttsConfig.mimo.voice, "茉莉");
 		assert.equal(fourth.ttsConfig.custom.apiKey, "custom-key", "自定义 TTS 应保持不变");
 	});
+
+	console.log("\nPOST /rewrite（转述试跑：用当前提示词转一遍）");
+	await postSettings({ rewrite: true, rewritePrompt: "转述成活泼可爱一点" });
+	{
+		const res = fakeRes();
+		await routes.get("/dsh-voice-chat/rewrite")(
+			fakeReq("POST", "/dsh-voice-chat/rewrite", JSON.stringify({ text: "很长的一段原文" })), res
+		);
+		check("/rewrite 返回转述结果", () => {
+			assert.equal(res.captured.status, 200);
+			const body = JSON.parse(res.captured.body);
+			assert.equal(body.text, "转述后的内容");
+			assert.equal(body.customPrompt, true, "应识别出当前用的是自定义提示词");
+		});
+		check("用户自定义提示词真的传给了 LLM（并补上输出格式约束）", () => {
+			assert.ok(lastLlmCall, "应调用过 LLM");
+			assert.ok(lastLlmCall.system.startsWith("转述成活泼可爱一点"), "用户提示词要排在最前");
+			assert.ok(lastLlmCall.system.includes("只输出"), "还要带输出格式约束");
+		});
+	}
+	// 清掉自定义提示词 → 回到内置预设
+	await postSettings({ rewritePrompt: "" });
+	{
+		const res = fakeRes();
+		await routes.get("/dsh-voice-chat/rewrite")(
+			fakeReq("POST", "/dsh-voice-chat/rewrite", JSON.stringify({ text: "原文" })), res
+		);
+		check("清空自定义提示词 → 回落到内置预设", () => {
+			const body = JSON.parse(res.captured.body);
+			assert.equal(body.customPrompt, false);
+			assert.ok(lastLlmCall.system.includes("你就是刚才回复用户的那位 AI 助手本人"), "应换成内置预设提示词");
+		});
+	}
 
 	console.log("\n回归：MiMo TTS 不填 Base URL 不再报“未配置 Base URL”（离线检查）");
 	// 清掉 MiMo 密钥（离线可控）：此时应报“未配置 API Key”，说明地址已回落到厂商默认
