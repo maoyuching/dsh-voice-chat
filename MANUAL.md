@@ -36,7 +36,7 @@
 | 功能 | 说明 |
 |---|---|
 | 🎤 语音输入 | 点按开始聆听（"叮"提示音）→ 说话 → 静音 2.5s 自动结束（"咚"）→ 转写发送 |
-| 🗣️ 转述朗读 | （默认关闭）开启后：较长回复先经 LLM 收敛转述（≤原文、去代码表格），再 TTS 朗读；转述模型自动跟随当前对话 LLM |
+| 🗣️ 转述朗读 | （默认关闭）开启后：较长回复先经 LLM 收敛转述（≤原文、去代码表格），再 TTS 朗读；转述模型自动跟随当前对话 LLM；**提示词可自定义**（留空 = 内置预设） |
 | 🔊 TTS 引擎 | 支持 **Edge TTS**（微软免费）、**MiMo TTS**（小米，内置中文音色）、**自定义 TTS**（OpenAI 兼容） |
 | 🎤 ASR 引擎 | 支持 **SiliconFlow**（免费）、**Groq**（Whisper）、**MiMo**（小米，chat/completions 协议）、**自定义**（OpenAI 兼容） |
 | 🔇 静音开关 | 正在播报时点击**立即停止**；静音后不再自动朗读 |
@@ -135,6 +135,9 @@ dsh plugin --profile web add dsh-voice-chat
 - TTS 引擎（Edge TTS / MiMo TTS / 自定义 TTS）
 - 各引擎对应的 Base URL / 模型名 / API Key / 音色
 - 长回复转述朗读开关（默认关闭）
+- **转述提示词（可选）**：勾上转述开关后展开输入框，可自定义转述"配方"
+  （例如"转述成活泼可爱"/"转述成严肃认真"）。
+  **留空 = 用内置预设提示词（照常生效）；填了 = 完全用你写的那份。**
 
 > 🔒 **ASR / TTS 的每个引擎都是独立配置**：切换引擎只是"换看哪一份"，各引擎的
 > Base URL / 模型 / API Key / 音色互不覆盖，保存也只写当前编辑的那一份。
@@ -163,6 +166,7 @@ dsh plugin --profile web add dsh-voice-chat
     silenceMs: 2500                   # 静音多少毫秒后自动结束录音
     # 朗读设置
     rewrite: false                    # 转述朗读开关（默认关闭，设置页可切换）
+    rewritePrompt: ''                 # 自定义转述提示词（留空 = 用内置预设；设置页可改）
     ttsEngine: edge                   # TTS 引擎：edge | mimo | custom
     voice: zh-CN-XiaoxiaoNeural       # Edge 音色（等价于 tts.edge.voice）
     ttsBaseUrl: https://api.openai.com/v1   # 旧式单槽（作用于当前引擎）

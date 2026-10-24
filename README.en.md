@@ -9,7 +9,7 @@ A Doubao-style voice chat plugin for the [DeepSeek Harness](https://github.com/d
 ## Features
 
 - **Voice input**: click 🎤 to start listening (ding) → speak → auto-stops after 2.5s of silence (dong) → transcribed and sent;
-- **Voice output**: AI replies are synthesized with TTS and read aloud at +10% speed; a **condensed reading** option (off by default) can rewrite longer replies into a short spoken summary before speaking — **the rewrite follows the LLM actually selected in the current conversation**;
+- **Voice output**: AI replies are synthesized with TTS and read aloud at +10% speed; a **condensed reading** option (off by default) can rewrite longer replies into a short spoken summary before speaking — **the rewrite follows the LLM actually selected in the current conversation**; **the rewrite prompt is customizable** (empty = built-in preset);
 - **ASR engines**: supports **SiliconFlow** (SenseVoice, free tier), **Groq** (Whisper), **Xiaomi MiMo** (chat/completions protocol), and **custom OpenAI-compatible** endpoints — switchable in settings;
 - **TTS engines**: supports **Edge TTS** (Microsoft, free), **Xiaomi MiMo TTS** (chat/completions protocol with built-in Chinese voices), and **custom TTS** (OpenAI-compatible API);
 - **Isolated engine configs**: every ASR/TTS engine stores its own Base URL / model / API key / voice, so switching engines never overwrites another one (legacy single-slot configs migrate automatically);
@@ -53,6 +53,9 @@ Open DSH's settings dialog (gear icon, bottom-left) → "**voice chat**" on the 
 - TTS engine (Edge TTS / MiMo TTS / custom TTS)
 - Per-engine Base URL / model name / API key / voice
 - Condensed reading toggle (off by default)
+- **Rewrite prompt (optional)**: a text box appears once the toggle is on, so you can
+  define the "recipe" of the rewrite (e.g. "make it playful" / "make it formal").
+  **Leaving it empty uses the built-in preset prompt**; filling it replaces the preset.
 
 > 🔒 **Per-engine isolation**: each of the 4 ASR engines and 3 TTS engines keeps its own
 > Base URL / model / API key / voice. Switching engines only switches which slot you are
@@ -79,6 +82,7 @@ Override `config` by id in the profile's `~/.dsh/profiles/web/cordis.patch.yml` 
     llmModel: deepseek-v4-flash     # rewrite model (fallback, follows current conversation)
     silenceMs: 2500
     rewrite: false                  # condensed reading (default off; toggle in settings)
+    rewritePrompt: ''               # custom rewrite prompt (empty = built-in preset)
     ttsEngine: edge                 # edge | mimo | custom
     voice: zh-CN-XiaoxiaoNeural     # Edge voice (same as tts.edge.voice)
     ttsBaseUrl: https://api.openai.com/v1   # legacy single slot: applies to the active engine

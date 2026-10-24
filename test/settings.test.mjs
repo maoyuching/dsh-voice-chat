@@ -8,8 +8,10 @@ import {
 	migrateLegacySettings,
 	mergeSettings,
 	resolveAsrConfig,
+	resolveRewritePrompt,
 	resolveTtsConfig,
 	resolveTtsEngine,
+	SPEAK_SYSTEM_PROMPT,
 	sanitizeSettings
 } from "../lib/index.js";
 
@@ -228,6 +230,37 @@ test("ASR 解析：各引擎只读自己的槽", () => {
 	const groqSaved = { ...saved, asrEngine: "groq" };
 	assert.equal(resolveAsrConfig({}, groqSaved).apiKey, "gsk-x");
 	assert.equal(resolveAsrConfig({}, groqSaved).baseUrl, "https://api.groq.com/openai/v1");
+});
+
+test("转述提示词：留空用内置预设，填了就用用户的", () => {
+	// 1) 什么都没填 → 用内置预设提示词（保证"不填也能生效"）
+	assert.equal(resolveRewritePrompt({}, {}), SPEAK_SYSTEM_PROMPT);
+	assert.equal(resolveRewritePrompt({}, { rewritePrompt: "" }), SPEAK_SYSTEM_PROMPT);
+	assert.equal(resolveRewritePrompt({}, { rewritePrompt: "   " }), SPEAK_SYSTEM_PROMPT);
+	// 2) 设置面板填了 → 用用户的
+	const custom = "转述成活泼可爱一点";
+	assert.equal(resolveRewritePrompt({}, { rewritePrompt: custom }), custom);
+	// 3) 面板没填但行 config 填了 → 用行 config 的
+	assert.equal(resolveRewritePrompt({ rewritePrompt: "行配置" }, {}), "行配置");
+	// 4) 面板优先于行 config
+	assert.equal(resolveRewritePrompt({ rewritePrompt: "行配置" }, { rewritePrompt: custom }), custom);
+});
+
+test("转述提示词：设置面板保存/回显，空串能存住（清空即回内置默认）", () => {
+	const saved = mergeSettings({}, sanitizeSettings({ rewrite: true, rewritePrompt: "转述成严肃认真" }));
+	assert.equal(saved.rewrite, true);
+	assert.equal(saved.rewritePrompt, "转述成严肃认真");
+	// 清空：空串必须被存住（否则清不掉自定义）
+	const cleared = mergeSettings(saved, sanitizeSettings({ rewritePrompt: "" }));
+	assert.equal(cleared.rewritePrompt, "");
+	assert.equal(resolveRewritePrompt({}, cleared), SPEAK_SYSTEM_PROMPT);
+	// 超长提示词被截断
+	const long = mergeSettings({}, sanitizeSettings({ rewritePrompt: "x".repeat(9000) }));
+	assert.equal(long.rewritePrompt.length, 4000);
+	// 面板没提交 rewritePrompt 时不影响其它字段
+	const kept = mergeSettings(saved, sanitizeSettings({ autoSend: false }));
+	assert.equal(kept.rewritePrompt, "转述成严肃认真");
+	assert.equal(kept.autoSend, false);
 });
 
 console.log(`\n${passed} 项通过${process.exitCode ? "（存在失败）" : ""}`);

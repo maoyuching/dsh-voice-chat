@@ -133,6 +133,40 @@ function onChangeOf(tree, labelText) {
 	assert.equal(typeof control.props.onChange, "function", `字段「${labelText}」应有 onChange`);
 	return control.props.onChange;
 }
+/** 该标签的控件是否存在（不抛错版 controlByLabel）。 */
+function hasControlByLabel(tree, labelText) {
+	let found = null;
+	walk(tree, (node) => {
+		if (found || node.type !== "div") return;
+		const kids = node.children || [];
+		const label = kids[0];
+		if (!label || label.type !== "label") return;
+		if (textOf(label) !== labelText) return;
+		found = kids[1];
+	});
+	return !!found;
+}
+/** 找到转述开关那个复选框（表单里还有"自动发送"复选框，按文字定位）。 */
+function findRewriteCheckbox(tree) {
+	let found = null;
+	walk(tree, (node) => {
+		if (found || node.type !== "label") return;
+		if (!textOf(node).includes("长回复先转述")) return;
+		const input = (node.children || []).find((c) => c && c.type === "input" && c.props?.type === "checkbox");
+		if (input) found = input;
+	});
+	assert.ok(found, "找不到转述开关");
+	return found;
+}
+/** 按文字找按钮。 */
+function findButton(tree, text) {
+	let found = null;
+	walk(tree, (node) => {
+		if (!found && node.type === "button" && textOf(node).includes(text)) found = node;
+	});
+	assert.ok(found, `找不到按钮「${text}」`);
+	return found;
+}
 
 // 新版宿主 /settings 回显：每引擎一份槽
 const HOST_SETTINGS = {
@@ -144,6 +178,8 @@ const HOST_SETTINGS = {
 	autoSend: false,
 	silenceMs: 2000,
 	rewrite: true,
+	rewritePrompt: "转述成活泼可爱一点",
+	rewritePromptDefault: "【内置默认提示词】",
 	ttsEngine: "mimo",
 	ttsVoice: "冰糖",
 	ttsBaseUrl: "https://api.xiaomimimo.com/v1",
@@ -332,6 +368,47 @@ await test("旧宿主只给扁平键：只当成当前引擎的槽值", async ()
 	t2 = renderOnce(Section2, stub2);
 	assert.equal(controlByLabel(t2, "TTS Base URL").props.value, "", "旧宿主的扁平地址只能归当前引擎(edge)，不能凭空当成 custom 的");
 	assert.equal(controlByLabel(t2, "ASR Base URL").props.value, "http://127.0.0.1:8080/v1", "ASR 当前引擎是 custom，扁平键归它");
+});
+
+console.log("\n转述提示词可自定义（留空 = 用内置默认）");
+await test("勾了转述才展开提示词输入框，并回显用户填的那份", async () => {
+	// HOST_SETTINGS 里 rewrite=true → 输入框应出现，且值是用户自己填的提示词
+	assert.equal(controlByLabel(tree, "转述提示词（可选）").props.value, "转述成活泼可爱一点");
+	// 取消勾选 → 输入框收起
+	const cb = findRewriteCheckbox(tree);
+	cb.props.onChange({ target: { checked: false } });
+	tree = renderOnce(Section, stub);
+	assert.equal(hasControlByLabel(tree, "转述提示词（可选）"), false, "没勾转述时不该显示提示词输入框");
+	// 再勾回来 → 提示词还在（没被清掉）
+	const cb2 = findRewriteCheckbox(tree);
+	cb2.props.onChange({ target: { checked: true } });
+	tree = renderOnce(Section, stub);
+	assert.equal(controlByLabel(tree, "转述提示词（可选）").props.value, "转述成活泼可爱一点");
+});
+
+await test("提示词输入框可编辑，并跟着保存一起提交", async () => {
+	const ta = controlByLabel(tree, "转述提示词（可选）");
+	ta.props.onChange({ target: { value: "转述成严肃认真一点" } });
+	tree = renderOnce(Section, stub);
+	posts.length = 0;
+	findButton(tree, "保存").props.onClick();
+	await flush();
+	assert.equal(posts.length, 1, "应发出一次 POST");
+	assert.equal(posts[0].body.rewritePrompt, "转述成严肃认真一点", "保存应带上自定义转述提示词");
+});
+
+await test("「填入内置默认提示词」按钮把默认提示词填进输入框", async () => {
+	findButton(tree, "填入内置默认提示词").props.onClick();
+	tree = renderOnce(Section, stub);
+	assert.equal(controlByLabel(tree, "转述提示词（可选）").props.value, "【内置默认提示词】");
+	// 「清空」→ 回到空串（= 宿主用内置默认）
+	findButton(tree, "清空（改回内置默认）").props.onClick();
+	tree = renderOnce(Section, stub);
+	assert.equal(controlByLabel(tree, "转述提示词（可选）").props.value, "");
+	posts.length = 0;
+	findButton(tree, "保存").props.onClick();
+	await flush();
+	assert.equal(posts[0].body.rewritePrompt, "", "空串必须提交上去（清空自定义 = 回落内置默认）");
 });
 
 console.log(`\n${passed} 项通过${process.exitCode ? "（存在失败）" : ""}`);
