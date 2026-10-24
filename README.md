@@ -46,7 +46,8 @@ dsh plugin --profile web add dsh-voice-chat
 **🎤 语音识别设置**
 - ASR 引擎选择（SiliconFlow / Groq / MiMo / 自定义）
 - Base URL / 模型名 / API Key
-- 识别后是否自动发送
+- 识别后是否自动发送（开启后：识别完**先把文字放进输入框**，再弹一条 **5 秒倒计时确认条**；
+  到点自动发送，期间点「取消」即可留在输入框里自己改）
 - 静音自动结束时长（秒）
 
 **🔊 朗读设置**

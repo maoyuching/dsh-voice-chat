@@ -46,7 +46,9 @@ Open DSH's settings dialog (gear icon, bottom-left) → "**voice chat**" on the 
 **🎤 Voice Recognition Settings**
 - ASR engine (SiliconFlow / Groq / MiMo / custom)
 - Base URL / model name / API key
-- Auto-send after transcription
+- Auto-send after transcription (when on: the text is **put into the input box first**,
+  then a **5-second countdown bar** appears — it sends automatically when the countdown
+  ends; click "Cancel" within 5s to keep the text in the box and edit it)
 - Silence auto-stop duration (seconds)
 
 **🔊 Readout Settings**

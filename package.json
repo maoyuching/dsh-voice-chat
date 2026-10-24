@@ -9,7 +9,7 @@
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
-    "test": "node test/settings.test.mjs && node test/client-settings.test.mjs && node test/replay-menu.test.mjs && node test/host-smoke.mjs"
+    "test": "node test/settings.test.mjs && node test/client-settings.test.mjs && node test/replay-menu.test.mjs && node test/auto-send-confirm.test.mjs && node test/host-smoke.mjs"
   },
   "exports": {
     ".": {
